@@ -53,7 +53,7 @@ namespace Kith
         private void MainWindow_SizeChanged(object sender, WindowSizeChangedEventArgs e)
         {
             OverlappedPresenter presenter = (OverlappedPresenter)AppWindow.Presenter;
-            MaximizeRestoreBtn.Content = presenter.State == OverlappedPresenterState.Maximized ? "Restore" : "Maximize";
+            MaximizeRestoreBtn.Icon = presenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
         }
         private void MinimizeBtn_Click(object sender, RoutedEventArgs e)
         {

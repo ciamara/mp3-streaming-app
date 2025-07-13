@@ -13,30 +13,38 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <StackPanel HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Spacing="10">
-        <Button x:Name="MaximizeRestoreBtn"
-                Content="Maximize"
-                Click="MaximizeRestoreBtn_Click"
-                Width="200" />
-        <Button x:Name="MinimizeBtn"
-                Content="Minimize"
+    <StackPanel HorizontalAlignment="Right"
+                VerticalAlignment="Top">
+
+        <AppBarButton x:Name="MinimizeBtn"
                 Click="MinimizeBtn_Click"
-                Width="200" />
-        <Button x:Name="CloseBtn"
+                Width="50"
+                Height="50"
+                Margin="-100,0,0,0">
+            <AppBarButton.Icon>
+                <SymbolIcon Symbol="Remove"/>
+            </AppBarButton.Icon>
+        </AppBarButton>
+
+        <AppBarButton x:Name="MaximizeRestoreBtn"
+                Click="MaximizeRestoreBtn_Click"
+                Width="50"
+                Height="50"
+                Margin="-50,-50,0,0">
+            <AppBarButton.Icon>
+                <SymbolIcon Symbol="FullScreen"/>
+            </AppBarButton.Icon>
+        </AppBarButton>
+
+        <AppBarButton x:Name="CloseBtn"
                 Click="CloseBtn_Click"
-                Width="200"
-                Margin="0,16,0,0">
-            <StackPanel Orientation="Horizontal"
-                        VerticalAlignment="Center">
-                <SymbolIcon Symbol="Cancel"
-                            Margin="0,0,4,0"
-                            Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
-                <TextBlock Text="Close"
-                           Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
-            </StackPanel>
-        </Button>
+                Width="50"
+                Height="50"
+                Margin="0,-50,0,0">
+            <AppBarButton.Icon>
+                <SymbolIcon Symbol="Cancel"/>
+            </AppBarButton.Icon>
+        </AppBarButton>
     </StackPanel>
 
 </Window>
