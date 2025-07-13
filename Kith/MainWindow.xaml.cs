@@ -64,6 +64,29 @@ namespace Kith
         {
             this.Close();
         }
+        private void GoBackBtn_Click(object sender, RoutedEventArgs e)
+        {
+           
+        }
+        private void GoForwardBtn_Click(object sender, RoutedEventArgs e)
+        {
+      
+        }
+        private void MainSearch_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+
+        }
+        private void MainSearch_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+
+        {
+
+        }
+        private void MainSearch_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        {
+
+        }
+
+
 
     }
 }
