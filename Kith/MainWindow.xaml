@@ -6,7 +6,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Kith"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:sources="using:Kith.Sources"
     mc:Ignorable="d"
     Title="Kith">
 
@@ -17,17 +18,34 @@
 
     <Grid x:Name="LayoutRoot" Background="{StaticResource WindowBackgroundBrush}">
 
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="25*"/>
+            <ColumnDefinition Width="50*"/>
+            <ColumnDefinition Width="25*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
+            <RowDefinition/>
+            <RowDefinition Height="80"/>
+        </Grid.RowDefinitions>
+
         <Grid.Resources>
             <Style TargetType="AppBarButton">
                 <Setter Property="Width" Value="50"/>
                 <Setter Property="Height" Value="50"/>
             </Style>
+            <DataTemplate x:Key="SongListViewTemplate" x:DataType="sources:Song">
+                <TextBlock Text="{x:Bind Title}" x:Phase="1" Margin="0,5,0,5"/>
+            </DataTemplate>
         </Grid.Resources>
 
         <StackPanel HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Orientation="Horizontal"
-                    Spacing="0">
+                    Spacing="0"
+                    Grid.Column="2"
+                    Grid.Row="0">
 
             <AppBarButton x:Name="MinimizeBtn"
                           Click="MinimizeBtn_Click"
@@ -76,7 +94,69 @@
                 <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource FoxyDark}"/>
             </TextBox.Resources>
 
-        </TextBox>-->      
+        </TextBox>-->
+
+        <!--GRADIENT GRID -->
+        <Rectangle x:Name="MiddleSection"
+                   MaxHeight="724"
+                   MaxWidth="768.8"
+                   Margin="0,0,0,0"
+                   Stroke="Transparent" 
+                   Grid.Column="1"
+                   Grid.Row="1"
+                   RadiusX="50"
+                   RadiusY="50"
+                   Fill="{ThemeResource ColorDownGradientBrush}"/>
+
+        <Rectangle x:Name="LeftSection"
+                       MaxHeight="724" 
+                       MaxWidth="373.6"
+                       Margin="5,0,5,0"
+                       Stroke="Transparent"              
+                       Grid.Column="0"
+                       Grid.Row="1"
+                       RadiusX="50"
+                       RadiusY="50"
+                       Fill="{ThemeResource ColorDownGradientBrush}"/>
+
+        <Rectangle x:Name="RightSection"
+                       MaxHeight="724" 
+                       MaxWidth="373.6"
+                       Margin="5,0,5,0"
+                       Stroke="Transparent"  
+                       Grid.Column="2"
+                       Grid.Row="1"
+                       RadiusX="50"
+                       RadiusY="50"
+                       Fill="{ThemeResource ColorDownGradientBrush}"/>
+
+        <Rectangle x:Name="BottomSection" 
+                   Height="70" 
+                   MaxWidth="1530"
+                   Margin="5,5,5,5"
+                   Stroke="Transparent"  
+                   Grid.ColumnSpan="3"
+                   Grid.Row="2"
+                   RadiusX="30"
+                   RadiusY="30"
+                   Fill="{ThemeResource ColorUpGradientBrush}"/>
+
+        <!--ALL SONGS VIEW -->
+        <ListView x:Name="SongFilteredListView"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Bottom"
+                  ItemTemplate="{StaticResource SongListViewTemplate}"
+                  SelectionMode="Single"
+                  ShowsScrollingPlaceholders="True"
+                  Height="220"
+                  Width="530"
+                  Margin="0,0,0,10"
+                  BorderThickness="0"
+                  BorderBrush="{StaticResource WindowBackgroundBrush}"
+                  Grid.Column="1"
+                  Grid.Row="1">
+        </ListView>
+
 
         <AutoSuggestBox PlaceholderText="Search..."
                         TextChanged="MainSearch_TextChanged"
@@ -91,7 +171,9 @@
                         CornerRadius="22"
                         Background="{ThemeResource ButtonBackgroundBrush}"
                         Foreground="{ThemeResource ButtonForegroundBrush}"
-                        BorderBrush="{ThemeResource ButtonBackgroundBrush}">
+                        BorderBrush="{ThemeResource ButtonBackgroundBrush}"
+                        Grid.Column="1"
+                        Grid.Row="0">
             <AutoSuggestBox.Resources>
                 <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
                 <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
@@ -102,7 +184,9 @@
         <StackPanel HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Orientation="Horizontal"
-                    Spacing="0">
+                    Spacing="0"
+                    Grid.Column="0"
+                    Grid.Row="0">
 
             <AppBarButton x:Name="GoBackBtn"
                           Click="GoBackBtn_Click"

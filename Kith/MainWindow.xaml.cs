@@ -1,3 +1,4 @@
+using Kith.Sources;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -24,6 +25,12 @@ namespace Kith
         public MainWindow()
         {
             this.InitializeComponent();
+            //setting topsection of grid to be titlebar (in order to be draggable)
+            CustomizeWindow();
+
+            //setting min window size
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            _ = new WindowsSubclass(hwnd, 69, new Size(930, 550));
 
             AppWindow.SetIcon("Assets/Tiles/GalleryIcon.ico");
             AppWindow.TitleBar.PreferredTheme = TitleBarTheme.UseDefaultAppMode;
@@ -38,6 +45,17 @@ namespace Kith
             AppWindow.SetPresenter(presenter);
 
             SizeChanged += MainWindow_SizeChanged;
+        }
+        private void CustomizeWindow()
+        {
+            if (AppWindow?.Presenter is not OverlappedPresenter presenter)
+            {
+                return;
+            }
+
+            presenter.SetBorderAndTitleBar(hasBorder: false, hasTitleBar: false);
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(LayoutRoot);
         }
         private void MaximizeRestoreBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -86,6 +104,7 @@ namespace Kith
         {
 
         }
+
 
 
 

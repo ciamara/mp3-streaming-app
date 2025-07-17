@@ -15,6 +15,20 @@
             <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#1B1B1B"/>
             <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#D7CFCD"/>
 
+            <LinearGradientBrush x:Key="ColorDownGradientBrush"  StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#111111" Offset="0.1"/>
+                <GradientStop Color="#251914" Offset="0.40"/>
+                <GradientStop Color="#402218" Offset="0.60"/>
+                <GradientStop Color="#963719" Offset="1.0" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ColorUpGradientBrush"  StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#963719" Offset="0.1" />
+                <GradientStop Color="#402218" Offset="0.50"/>
+                <GradientStop Color="#251914" Offset="0.70"/>
+                <GradientStop Color="#111111" Offset="1.0"/>
+            </LinearGradientBrush>
+
             <SolidColorBrush x:Key="AppBarButtonBackground" Color="Transparent"/>
             <SolidColorBrush x:Key="AppBarButtonForeground" Color="#D7CFCD"/>
 
@@ -22,9 +36,11 @@
             <SolidColorBrush x:Key="AppBarButtonForegroundPointerOver" Color="#D7CFCD"/>
 
             <Color x:Key="BrokenBlack">#1B1B1B</Color>
+            <Color x:Key="BackgroundBlack">#111111</Color>
             <Color x:Key="LighterBrokenBlack">#2b2827</Color>
             <Color x:Key="BrokenWhite">#D7CFCD</Color>
             <Color x:Key="FoxyDark">#963719</Color>
+            <Color x:Key="GradientMidtone">#251914</Color>
 
         </ResourceDictionary>
     </Application.Resources>

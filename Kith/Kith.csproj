@@ -12,6 +12,13 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Assets\NewFolder\**" />
+    <Content Remove="Assets\NewFolder\**" />
+    <EmbeddedResource Remove="Assets\NewFolder\**" />
+    <None Remove="Assets\NewFolder\**" />
+    <Page Remove="Assets\NewFolder\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -38,6 +45,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4188" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
+	<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.49-beta" />
   </ItemGroup>
 
   <!--
@@ -56,4 +64,13 @@
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
   </PropertyGroup>
+  <ItemGroup>
+    <PRIResource Remove="Assets\NewFolder\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="NativeMethods.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="NativeMethods.txt" />
+  </ItemGroup>
 </Project>
