@@ -1,3 +1,5 @@
+using GroupDocs.Metadata;
+using GroupDocs.Metadata.Formats.Audio;
 using Kith.Sources;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
@@ -8,25 +10,36 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Media.Core;
+using Windows.Media.Playback;
+using Windows.Storage;
+
+
 
 
 namespace Kith
 {
     public sealed partial class MainWindow : Window
     {
+        public List<Song> Songs;
         public MainWindow()
         {
             this.InitializeComponent();
             //setting topsection of grid to be titlebar (in order to be draggable)
             CustomizeWindow();
+            RefreshSongs();
 
             //setting min window size
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -103,6 +116,43 @@ namespace Kith
         private void MainSearch_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
 
+        }
+        private async void RefreshSongs()
+        {
+            var song_files = Directory.EnumerateFiles("C:\\Users\\kotel\\Music", "*.*", SearchOption.TopDirectoryOnly)
+            .Where(s => s.EndsWith(".mp3"));
+
+            foreach (var song_file in song_files)
+            {
+                using (Metadata metadata = new Metadata(song_file))
+                {
+                    var root = metadata.GetRootPackage<MP3RootPackage>();
+                    if (root.ID3V2 != null && root. ID3V1 != null)
+                    {
+                        string title = (root.ID3V2.Title);
+                        Console.WriteLine(title);
+                        string artist = (root.ID3V2.Artist);
+                        Console.WriteLine(artist);
+                        string album = (root.ID3V2.Album);
+                        Console.WriteLine(album);
+                        string year = (root.ID3V2.Year);
+                        Console.WriteLine(year);
+                        string track = (root.ID3V2.TrackNumber);
+                        Console.WriteLine(track);
+                        ID3V1Genre genre = (root.ID3V1.GenreValue);
+                        Console.WriteLine(genre);
+                        string composer = (root.ID3V2.Composers);
+                        Console.WriteLine(composer);
+
+                        //TimeSpan length = await GetAudioFileDurationAsync(song_file);
+                        Console.WriteLine(song_file);
+                        //Console.WriteLine(length);
+
+                        var song = new Song(song_file, title, artist, album, year, track, genre, composer);
+                        this.Songs.Add(song);
+                    }
+                } 
+            }
         }
 
 
