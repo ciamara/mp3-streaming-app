@@ -26,6 +26,8 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
 
+using TagLib;
+
 
 
 
@@ -33,7 +35,7 @@ namespace Kith
 {
     public sealed partial class MainWindow : Window
     {
-        public List<Song> Songs;
+        private List<Song> Songs { get; set; } = new List<Song>();
         public MainWindow()
         {
             this.InitializeComponent();
@@ -117,41 +119,29 @@ namespace Kith
         {
 
         }
-        private async void RefreshSongs()
+        private void RefreshSongs()
         {
+            Songs.Clear();
+
             var song_files = Directory.EnumerateFiles("C:\\Users\\kotel\\Music", "*.*", SearchOption.TopDirectoryOnly)
             .Where(s => s.EndsWith(".mp3"));
 
             foreach (var song_file in song_files)
             {
-                using (Metadata metadata = new Metadata(song_file))
-                {
-                    var root = metadata.GetRootPackage<MP3RootPackage>();
-                    if (root.ID3V2 != null && root. ID3V1 != null)
-                    {
-                        string title = (root.ID3V2.Title);
-                        Console.WriteLine(title);
-                        string artist = (root.ID3V2.Artist);
-                        Console.WriteLine(artist);
-                        string album = (root.ID3V2.Album);
-                        Console.WriteLine(album);
-                        string year = (root.ID3V2.Year);
-                        Console.WriteLine(year);
-                        string track = (root.ID3V2.TrackNumber);
-                        Console.WriteLine(track);
-                        ID3V1Genre genre = (root.ID3V1.GenreValue);
-                        Console.WriteLine(genre);
-                        string composer = (root.ID3V2.Composers);
-                        Console.WriteLine(composer);
+                TagLib.File tfile = TagLib.File.Create(song_file);
 
-                        //TimeSpan length = await GetAudioFileDurationAsync(song_file);
-                        Console.WriteLine(song_file);
-                        //Console.WriteLine(length);
+                string currentTitle = tfile.Tag.Title;
+                string[] currentArtists = tfile.Tag.Artists;
+                string currentAlbum = tfile.Tag.Album;
+                uint currentYear = tfile.Tag.Year;
+                uint currentTrack = tfile.Tag.Track;
+                string[] currentGenres = tfile.Tag.Genres;
+                TimeSpan currentDuration = tfile.Properties.Duration;
+                IPicture[] currentPicture = tfile.Tag.Pictures;
 
-                        var song = new Song(song_file, title, artist, album, year, track, genre, composer);
-                        this.Songs.Add(song);
-                    }
-                } 
+                Song currentSong = new Song(song_file, currentTitle, currentArtists, currentAlbum, currentYear, currentTrack, currentGenres, currentDuration, currentPicture);
+                Songs.Add(currentSong);
+
             }
         }
 

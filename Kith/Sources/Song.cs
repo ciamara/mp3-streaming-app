@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TagLib;
 
 namespace Kith.Sources
 {
@@ -11,26 +12,26 @@ namespace Kith.Sources
     {
         public string FileName { get; private set; }
         public string Title { get; private set; }
-        public string Artist { get; private set; }
+        public string[] Artists { get; private set; }
         public string Album { get; private set; }
-        public string Year { get; private set; }
-        public string Track { get; private set; }
-        public ID3V1Genre Genre { get; private set; }
-        public string Composer { get; private set; }
-        //public TimeSpan Length { get; private set; }
+        public uint Year { get; private set; }
+        public uint Track { get; private set; }
+        public string[] Genres { get; private set; }
+        public TimeSpan Duration { get; private set; }
+        public IPicture[] Pictures { get; private set; }
 
 
-        public Song(string filename, string title, string artist, string album, string year, string track, ID3V1Genre genre, string composer)
+        public Song(string filename, string title, string[] artists, string album, uint year, uint track, string[] genres, TimeSpan duration, IPicture[] pictures)
         {
             FileName = filename;
             Title = title;
-            Artist = artist;
+            Artists = artists;
             Album = album;
             Year = year;
             Track = track;
-            Genre = genre;    
-            Composer = composer;
-            //Length = length;
+            Genres = genres;    
+            Duration = duration;
+            Pictures = pictures;
         }
     }
 }
