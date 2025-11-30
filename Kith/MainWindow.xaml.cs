@@ -35,17 +35,26 @@ namespace Kith
 {
     public sealed partial class MainWindow : Window
     {
+        private object _windowSubclassingReference;
         private List<Song> Songs { get; set; } = new List<Song>();
+
+        private SongsView ViewModel { get; set; }
         public MainWindow()
         {
             this.InitializeComponent();
+
+            ViewModel = new SongsView();
+            LayoutRoot.DataContext = ViewModel;
+       
             //setting topsection of grid to be titlebar (in order to be draggable)
             CustomizeWindow();
             RefreshSongs();
 
             //setting min window size
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            _ = new WindowsSubclass(hwnd, 69, new Size(930, 550));
+            //_ = new WindowsSubclass(hwnd, 69, new Size(930, 550));
+
+            _windowSubclassingReference = new WindowsSubclass(hwnd, 69, new Size(930, 550));
 
             AppWindow.SetIcon("Assets/Tiles/GalleryIcon.ico");
             AppWindow.TitleBar.PreferredTheme = TitleBarTheme.UseDefaultAppMode;
@@ -70,7 +79,7 @@ namespace Kith
 
             presenter.SetBorderAndTitleBar(hasBorder: false, hasTitleBar: false);
             ExtendsContentIntoTitleBar = true;
-            SetTitleBar(LayoutRoot);
+            SetTitleBar(TitleBarContainer);
         }
         private void MaximizeRestoreBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -122,6 +131,7 @@ namespace Kith
         private void RefreshSongs()
         {
             Songs.Clear();
+            List<Song> tempSongs = new List<Song>();
 
             var song_files = Directory.EnumerateFiles("C:\\Users\\kotel\\Music", "*.*", SearchOption.TopDirectoryOnly)
             .Where(s => s.EndsWith(".mp3"));
@@ -141,8 +151,12 @@ namespace Kith
 
                 Song currentSong = new Song(song_file, currentTitle, currentArtists, currentAlbum, currentYear, currentTrack, currentGenres, currentDuration, currentPicture);
                 Songs.Add(currentSong);
+                tempSongs.Add(currentSong);
+
+                
 
             }
+            ViewModel.LoadSongs(tempSongs);
         }
 
 
