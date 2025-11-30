@@ -52,7 +52,6 @@ namespace Kith
 
             //setting min window size
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            //_ = new WindowsSubclass(hwnd, 69, new Size(930, 550));
 
             _windowSubclassingReference = new WindowsSubclass(hwnd, 69, new Size(930, 550));
 

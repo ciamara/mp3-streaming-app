@@ -272,6 +272,7 @@
                           VerticalAlignment="Stretch"
                           ItemTemplate="{StaticResource SongListViewTemplate}"
                           SelectionMode="Single"
+                          SelectedItem="{Binding SelectedItem}"
                           ShowsScrollingPlaceholders="True"
                           Margin="25, 25, 45, 25"
                           BorderThickness="0"
@@ -280,6 +281,21 @@
                           Grid.Row="1">
             </ListView>
         </Grid>
+
+        <Grid Grid.Column="2" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*" />
+                <RowDefinition Height="3*" />
+            </Grid.RowDefinitions>
+
+            <Image Grid.Column="2"
+                   Source="{Binding SelectedItem.Pictures, ElementName=AllSongsView, Converter={StaticResource IPictureImageConverter}}"
+                   Width="100" Height="100"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top"
+                   Margin="0,0,0,0"/>
+
+        </Grid>
     </Grid>
-    
+
 </Window>

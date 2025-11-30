@@ -6,11 +6,25 @@ namespace Kith.Sources
 {
     internal class SongsView : INotifyPropertyChanged
     {
+        private Song _selectedItem;
         public ObservableCollection<Song> AllSongs { get; set; }
 
         public SongsView()
         {
             AllSongs = new ObservableCollection<Song>();
+        }
+
+        public Song SelectedItem
+        {
+            get { return _selectedItem; }
+            set
+            {
+                if (_selectedItem != value)
+                {
+                    _selectedItem = value;
+                    OnPropertyChanged(nameof(SelectedItem));
+                }
+            }
         }
 
         public void LoadSongs(List<Song> songs)
