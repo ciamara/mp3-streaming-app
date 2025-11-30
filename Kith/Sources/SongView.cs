@@ -1,12 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using TagLib.Riff;
+using System.Linq;
 
 namespace Kith.Sources
 {
     internal class SongsView : INotifyPropertyChanged
     {
-        private Song _selectedItem;
+        public Song _selectedSong;
+
         public ObservableCollection<Song> AllSongs { get; set; }
 
         public SongsView()
@@ -14,17 +18,33 @@ namespace Kith.Sources
             AllSongs = new ObservableCollection<Song>();
         }
 
-        public Song SelectedItem
+        public Song SelectedSong
         {
-            get { return _selectedItem; }
+            get { return _selectedSong; }
             set
             {
-                if (_selectedItem != value)
+                if (_selectedSong != value)
                 {
-                    _selectedItem = value;
-                    OnPropertyChanged(nameof(SelectedItem));
+                    _selectedSong = value;
+                    OnPropertyChanged(nameof(SelectedSong));
                 }
             }
+        }
+
+        public Song UpdateSelectedSong(Guid id, string title, string artists, string album, string year, string track, string genres)
+        {
+            string[] arrayArtists = artists.Split(',');
+            string[] arrayGenres = genres.Split(',');
+            uint iyear = Convert.ToUInt32(year, 16);
+            uint itrack = Convert.ToUInt32(track, 16);
+
+            var songToUpdate = AllSongs.Single(s => s.ID == id);
+            Song updatedSong = new Song(songToUpdate.Index, songToUpdate.FileName, title, arrayArtists, album, iyear, itrack, arrayGenres, songToUpdate.Duration, songToUpdate.Pictures);
+            
+            this._selectedSong = updatedSong;
+            AllSongs.Remove(songToUpdate);
+            AllSongs.Add(updatedSong);
+            return updatedSong;
         }
 
         public void LoadSongs(List<Song> songs)

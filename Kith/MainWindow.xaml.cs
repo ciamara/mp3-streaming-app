@@ -114,6 +114,27 @@ namespace Kith
         {
       
         }
+        private void saveTags(object sender, RoutedEventArgs e)
+        {
+
+            string[] arrayArtists = artistsInput.Text.Split(',');
+
+            Guid id = Guid.Parse(idInput.Text);
+
+            Song songToUpdate = Songs.Single(s => s.ID == id);
+
+            Songs.Remove(songToUpdate);
+
+            Songs.Add(ViewModel.UpdateSelectedSong(id, titleInput.Text, artistsInput.Text, albumInput.Text, yearInput.Text, trackInput.Text, genresInput.Text));
+
+            Songs = Songs.OrderBy(c => c.Index).ToList();
+
+            UpdateFiles();
+
+            Songs = Songs.OrderBy(c => c.Index).ToList();
+
+            RefreshSongs();
+        }
         private void MainSearch_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
         {
 
@@ -134,7 +155,7 @@ namespace Kith
 
             var song_files = Directory.EnumerateFiles("C:\\Users\\kotel\\Music", "*.*", SearchOption.TopDirectoryOnly)
             .Where(s => s.EndsWith(".mp3"));
-
+            int index = 0;
             foreach (var song_file in song_files)
             {
                 TagLib.File tfile = TagLib.File.Create(song_file);
@@ -148,14 +169,43 @@ namespace Kith
                 TimeSpan currentDuration = tfile.Properties.Duration;
                 IPicture[] currentPicture = tfile.Tag.Pictures;
 
-                Song currentSong = new Song(song_file, currentTitle, currentArtists, currentAlbum, currentYear, currentTrack, currentGenres, currentDuration, currentPicture);
+                Song currentSong = new Song(index, song_file, currentTitle, currentArtists, currentAlbum, currentYear, currentTrack, currentGenres, currentDuration, currentPicture);
                 Songs.Add(currentSong);
                 tempSongs.Add(currentSong);
 
-                
+                index += 1;
 
             }
             ViewModel.LoadSongs(tempSongs);
+        }
+
+        private void UpdateFiles()
+        {
+            var song_files = Directory.EnumerateFiles("C:\\Users\\kotel\\Music", "*.*", SearchOption.TopDirectoryOnly)
+            .Where(s => s.EndsWith(".mp3"));
+
+            var index = 0;
+
+            foreach (var song_file in song_files)
+            {
+                Song localSong = Songs[index];
+
+                TagLib.File tfile = TagLib.File.Create(song_file);
+
+                tfile.Tag.Title = localSong.Title;
+                tfile.Tag.Artists = localSong.Artists;
+                tfile.Tag.Album = localSong.Album;
+                tfile.Tag.Year = localSong.Year;
+                tfile.Tag.Track = localSong.Track;
+                tfile.Tag.Genres = localSong.Genres;
+                tfile.Tag.Pictures = localSong.Pictures;
+
+                tfile.Save();
+
+                index += 1;
+            }
+
+
         }
 
 

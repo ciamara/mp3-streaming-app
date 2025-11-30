@@ -10,44 +10,18 @@ using System.Threading.Tasks;
 
 namespace Kith.Converters
 {
-    internal class IndexFinderConverter : IValueConverter
+    internal class IndexConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            if (value is DependencyObject element)
+            if (value is int element)
             {
-                ListViewItem container = FindParent<ListViewItem>(element);
-
-                if (container != null)
-                {
-                    ListView listview = FindParent<ListView>(container);
-
-                    if (listview != null)
-                    {
-                        int index = listview.IndexFromContainer(container);
-
-                        if (index >= 0)
-                        {
-                            return (index + 1).ToString();
-                        }
-                    }
-                }
+                int index = (int)value;
+                return (index + 1).ToString();
             }
             return "-";
         }
-        private static T FindParent<T>(DependencyObject child) where T : DependencyObject
-        {
-            DependencyObject parent = VisualTreeHelper.GetParent(child);
-            if (parent == null) return null;
-
-            T parentT = parent as T;
-            if (parentT != null)
-            {
-                return parentT;
-            }
-            return FindParent<T>(parent);
-        }
-
+        
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {
             throw new NotImplementedException();

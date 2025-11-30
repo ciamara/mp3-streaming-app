@@ -10,6 +10,9 @@ namespace Kith.Sources
 {
     public class Song
     {
+        public Guid ID { get; private set; }
+
+        public int Index { get; private set; }
         public string FileName { get; private set; }
         public string Title { get; private set; }
         public string[] Artists { get; private set; }
@@ -21,8 +24,10 @@ namespace Kith.Sources
         public IPicture[] Pictures { get; private set; }
 
 
-        public Song(string filename, string title, string[] artists, string album, uint year, uint track, string[] genres, TimeSpan duration, IPicture[] pictures)
+        public Song(int index, string filename, string title, string[] artists, string album, uint year, uint track, string[] genres, TimeSpan duration, IPicture[] pictures)
         {
+            ID = Guid.NewGuid();
+            Index = index;
             FileName = filename;
             Title = title;
             Artists = artists;

@@ -34,8 +34,8 @@
 
         <Grid.Resources>
             <converters:CeilingConverter x:Key="DurationCeilingConverter"/>
-            <converters:StringJoinConverter x:Key="ArtistJoinConverter"/>
-            <converters:IndexFinderConverter x:Key="IndexFinderConverter"/>
+            <converters:StringJoinConverter x:Key="StringJoinConverter"/>
+            <converters:IndexConverter x:Key="IndexConverter"/>
             <converters:IPictureImageConverter x:Key="IPictureImageConverter"/>
             <DataTemplate x:Key="SongListViewTemplate">
                 <Grid Padding="0,5">
@@ -52,7 +52,7 @@
                                HorizontalAlignment="Left"
                                FontSize="12"
                                Margin="0,0,0,0"
-                               Text="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource IndexFinderConverter}}"
+                               Text="{Binding Index, Converter={StaticResource IndexConverter}}"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
 
@@ -72,7 +72,7 @@
                                    FontWeight="SemiBold"
                                    TextTrimming="CharacterEllipsis"/>
 
-                        <TextBlock Text="{Binding Artists, Converter={StaticResource ArtistJoinConverter}, ConverterParameter=', '}" 
+                        <TextBlock Text="{Binding Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}" 
                                    Style="{StaticResource BodyTextBlockStyle}" 
                                    VerticalAlignment="Center"
                                    FontSize="12"
@@ -284,18 +284,122 @@
 
         <Grid Grid.Column="2" Grid.Row="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="1*" />
-                <RowDefinition Height="3*" />
+                <RowDefinition Height="2*" />
+                <RowDefinition Height="5*" />
             </Grid.RowDefinitions>
 
             <Image Grid.Column="2"
+                   Grid.Row="0"
                    Source="{Binding SelectedItem.Pictures, ElementName=AllSongsView, Converter={StaticResource IPictureImageConverter}}"
-                   Width="100" Height="100"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Top"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"
                    Margin="0,0,0,0"/>
 
+            <Grid Grid.Column="2" 
+                      Grid.Row="1"
+                      VerticalAlignment="Stretch" 
+                      HorizontalAlignment="Stretch"
+                      Margin="0, 10, 0, 20">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="5*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Column="0"
+                               Grid.Row="0"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               Margin="10,0,0,0"
+                               Text="title:"
+                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                <TextBox x:Name="titleInput" Grid.Column="1" Grid.Row="0" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                         Text="{Binding SelectedItem.Title, ElementName=AllSongsView}">
+                </TextBox>
+
+                <TextBlock Grid.Column="0"
+                               Grid.Row="1"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               Margin="10,0,0,0"
+                               Text="artists:"
+                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                <TextBox x:Name="artistsInput" Grid.Column="1" Grid.Row="1" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                         Text="{Binding SelectedItem.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', ', ElementName=AllSongsView}">
+                </TextBox>
+
+
+                <TextBlock Grid.Column="0"
+                            Grid.Row="2"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            Margin="10,0,0,0"
+                            Text="album:"
+                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                <TextBox x:Name="albumInput" Grid.Column="1" Grid.Row="2" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                         Text="{Binding SelectedItem.Album, ElementName=AllSongsView}">
+                </TextBox>
+
+                <TextBlock Grid.Column="0"
+                           Grid.Row="3"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Margin="10,0,0,0"
+                           Text="year:"
+                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                <TextBox x:Name="yearInput" Grid.Column="1" Grid.Row="3" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                         Text="{Binding SelectedItem.Year, ElementName=AllSongsView}">
+                </TextBox>
+
+                <TextBlock Grid.Column="0"
+                           Grid.Row="4"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Margin="10,0,0,0"
+                           Text="track:"
+                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                <TextBox x:Name="trackInput" Grid.Column="1" Grid.Row="4" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                         Text="{Binding SelectedItem.Track, ElementName=AllSongsView}">
+                </TextBox>
+
+                <TextBlock Grid.Column="0"
+                           Grid.Row="5"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Margin="10,0,0,0"
+                           Text="genres:"
+                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                <TextBox x:Name="genresInput" Grid.Column="1" Grid.Row="5" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                         Text="{Binding SelectedItem.Genres, Converter={StaticResource StringJoinConverter}, ConverterParameter=', ', ElementName=AllSongsView}">
+                </TextBox>
+
+                <TextBox x:Name="idInput" Grid.Column="1" Grid.Row="5" FontSize="12" Opacity="0" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                    Text="{Binding SelectedItem.ID, ElementName=AllSongsView}">
+                </TextBox>
+
+                <Button x:Name="saveTagsButton"
+                        Grid.Column="1"
+                        Grid.Row="6"
+                        Content="save"
+                        Click="saveTags" 
+                        ClickMode="Release"
+                        Margin="0,5,80,0" Width="100"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+            </Grid>
         </Grid>
+
     </Grid>
 
 </Window>
