@@ -8,27 +8,16 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design.Serialization;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Security.Policy;
 using System.Threading.Tasks;
+using TagLib;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
-
-using TagLib;
-
-
+using Windows.Storage.Pickers;
 
 
 namespace Kith
@@ -39,6 +28,10 @@ namespace Kith
         private List<Song> Songs { get; set; } = new List<Song>();
 
         private SongsView ViewModel { get; set; }
+
+        private Song selectedSongBeforeUpdate;
+        private TimeSpan lastPlayedPosition;
+
         public MainWindow()
         {
             this.InitializeComponent();
@@ -116,22 +109,25 @@ namespace Kith
         }
         private void saveTags(object sender, RoutedEventArgs e)
         {
+            MediaPlayer player = MediaPlayerUI.MediaPlayer;
+            lastPlayedPosition = player.Position;
+            selectedSongBeforeUpdate = ViewModel.SelectedSong;
 
             string[] arrayArtists = artistsInput.Text.Split(',');
+            string[] arrayGenres = genresInput.Text.Split(',');
+            uint iyear = Convert.ToUInt32(yearInput.Text, 16);
+            uint itrack = Convert.ToUInt32(trackInput.Text, 16);
 
-            Guid id = Guid.Parse(idInput.Text);
+            Song songToUpdate = ViewModel.SelectedSong;
 
-            Song songToUpdate = Songs.Single(s => s.ID == id);
+            songToUpdate.Title = titleInput.Text;
+            songToUpdate.Artists = arrayArtists;
+            songToUpdate.Album = albumInput.Text;
+            songToUpdate.Year = iyear;
+            songToUpdate.Track = itrack;
+            songToUpdate.Genres = arrayGenres;
 
-            Songs.Remove(songToUpdate);
-
-            Songs.Add(ViewModel.UpdateSelectedSong(id, titleInput.Text, artistsInput.Text, albumInput.Text, yearInput.Text, trackInput.Text, genresInput.Text));
-
-            Songs = Songs.OrderBy(c => c.Index).ToList();
-
-            UpdateFiles();
-
-            Songs = Songs.OrderBy(c => c.Index).ToList();
+            UpdateFile(songToUpdate);
 
             RefreshSongs();
         }
@@ -151,7 +147,6 @@ namespace Kith
         private void RefreshSongs()
         {
             Songs.Clear();
-            List<Song> tempSongs = new List<Song>();
 
             var song_files = Directory.EnumerateFiles("C:\\Users\\kotel\\Music", "*.*", SearchOption.TopDirectoryOnly)
             .Where(s => s.EndsWith(".mp3"));
@@ -171,45 +166,145 @@ namespace Kith
 
                 Song currentSong = new Song(index, song_file, currentTitle, currentArtists, currentAlbum, currentYear, currentTrack, currentGenres, currentDuration, currentPicture);
                 Songs.Add(currentSong);
-                tempSongs.Add(currentSong);
 
                 index += 1;
 
             }
-            ViewModel.LoadSongs(tempSongs);
+            ViewModel.LoadSongs(Songs);
+            ViewModel.SelectedSong = selectedSongBeforeUpdate;
         }
 
-        private void UpdateFiles()
+        private async void UpdateFile(Song songToUpdate)
         {
-            var song_files = Directory.EnumerateFiles("C:\\Users\\kotel\\Music", "*.*", SearchOption.TopDirectoryOnly)
-            .Where(s => s.EndsWith(".mp3"));
-
-            var index = 0;
-
-            foreach (var song_file in song_files)
+            MediaPlayer player = MediaPlayerUI.MediaPlayer;
+            if (player.Source != null)
             {
-                Song localSong = Songs[index];
+                player.Pause();
+                player.Source = null;
+            }
 
-                TagLib.File tfile = TagLib.File.Create(song_file);
+                TagLib.File tfile = TagLib.File.Create(songToUpdate.FileName);
 
-                tfile.Tag.Title = localSong.Title;
-                tfile.Tag.Artists = localSong.Artists;
-                tfile.Tag.Album = localSong.Album;
-                tfile.Tag.Year = localSong.Year;
-                tfile.Tag.Track = localSong.Track;
-                tfile.Tag.Genres = localSong.Genres;
-                tfile.Tag.Pictures = localSong.Pictures;
+                tfile.Tag.Title = songToUpdate.Title;
+                tfile.Tag.Artists = songToUpdate.Artists;
+                tfile.Tag.Album = songToUpdate.Album;
+                tfile.Tag.Year = songToUpdate.Year;
+                tfile.Tag.Track = songToUpdate.Track;
+                tfile.Tag.Genres = songToUpdate.Genres;
+                tfile.Tag.Pictures = songToUpdate.Pictures;
 
                 tfile.Save();
 
-                index += 1;
+            selectedSongBeforeUpdate = songToUpdate;
+
+            if (selectedSongBeforeUpdate != null)
+            {
+                await LoadAndPlaySong(selectedSongBeforeUpdate, TimeSpan.Zero);
             }
-
-
         }
 
+        private async void SongsView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ViewModel.SelectedSong != null && e.AddedItems.Count > 0)
+            {
+                lastPlayedPosition = TimeSpan.Zero;
+                await LoadAndPlaySong(ViewModel.SelectedSong, TimeSpan.Zero);
+            }
+        }
+        public async Task LoadAndPlaySong(Song song, TimeSpan playFrom)
+        {
+            if (song == null) return;
 
+            Windows.Media.Playback.MediaPlayer player = MediaPlayerUI.MediaPlayer;
 
+            try
+            {
+                Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(song.FileName);
 
+                Windows.Media.Core.MediaSource mediaSource = Windows.Media.Core.MediaSource.CreateFromStorageFile(file);
+
+                player.Source = mediaSource;
+
+                player.Position = lastPlayedPosition;
+                player.Play();
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        private async void AlbumCoverImage_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+
+            if (ViewModel.SelectedSong == null)
+            {
+                System.Console.WriteLine("No song selected.");
+                return;
+            }
+
+            FileOpenPicker openPicker = new FileOpenPicker();
+            openPicker.ViewMode = PickerViewMode.Thumbnail;
+            openPicker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+
+            openPicker.FileTypeFilter.Add(".jpg");
+            openPicker.FileTypeFilter.Add(".jpeg");
+            openPicker.FileTypeFilter.Add(".png");
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hwnd);
+
+            StorageFile file = await openPicker.PickSingleFileAsync();
+
+            if (file != null)
+            {
+                await UpdateAlbumArt(ViewModel.SelectedSong, file);
+            }
+        }
+        private async Task UpdateAlbumArt(Song song, StorageFile imageFile)
+        {
+ 
+            MediaPlayer playerEngine = MediaPlayerUI.MediaPlayer;
+
+            bool isCurrentlySelected = (ViewModel.SelectedSong?.FileName == song.FileName);
+
+            if (isCurrentlySelected && playerEngine.Source != null)
+            {
+                lastPlayedPosition = playerEngine.Position;
+
+                playerEngine.Pause();
+                playerEngine.Source = null;
+            }
+
+            byte[] imageBytes;
+            using (var stream = await imageFile.OpenStreamForReadAsync())
+            {
+                imageBytes = new byte[stream.Length];
+                await stream.ReadAsync(imageBytes, 0, (int)stream.Length);
+            }
+
+            TagLib.Picture newPicture = new TagLib.Picture(new TagLib.ByteVector(imageBytes))
+            {
+                MimeType = imageFile.ContentType
+            };
+
+            Song songInstanceToUpdate = ViewModel.AllSongs.FirstOrDefault(s => s.FileName == song.FileName);
+
+            if (songInstanceToUpdate != null)
+            {
+                songInstanceToUpdate.Pictures = new TagLib.IPicture[] { newPicture };
+
+                using (TagLib.File tfile = TagLib.File.Create(songInstanceToUpdate.FileName))
+                {
+                    tfile.Tag.Pictures = songInstanceToUpdate.Pictures;
+                    tfile.Save();
+                }
+
+                if (isCurrentlySelected)
+                {
+                    await LoadAndPlaySong(songInstanceToUpdate, lastPlayedPosition);
+                }
+            }
+        }
     }
 }

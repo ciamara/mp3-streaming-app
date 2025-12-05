@@ -1,15 +1,16 @@
-﻿using System;
+﻿using Microsoft.UI.Xaml.Controls;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using TagLib.Riff;
 using System.Linq;
+using TagLib.Riff;
 
 namespace Kith.Sources
 {
-    internal class SongsView : INotifyPropertyChanged
+    public class SongsView : INotifyPropertyChanged
     {
-        public Song _selectedSong;
+        private Song _selectedSong;
 
         public ObservableCollection<Song> AllSongs { get; set; }
 
@@ -29,22 +30,6 @@ namespace Kith.Sources
                     OnPropertyChanged(nameof(SelectedSong));
                 }
             }
-        }
-
-        public Song UpdateSelectedSong(Guid id, string title, string artists, string album, string year, string track, string genres)
-        {
-            string[] arrayArtists = artists.Split(',');
-            string[] arrayGenres = genres.Split(',');
-            uint iyear = Convert.ToUInt32(year, 16);
-            uint itrack = Convert.ToUInt32(track, 16);
-
-            var songToUpdate = AllSongs.Single(s => s.ID == id);
-            Song updatedSong = new Song(songToUpdate.Index, songToUpdate.FileName, title, arrayArtists, album, iyear, itrack, arrayGenres, songToUpdate.Duration, songToUpdate.Pictures);
-            
-            this._selectedSong = updatedSong;
-            AllSongs.Remove(songToUpdate);
-            AllSongs.Add(updatedSong);
-            return updatedSong;
         }
 
         public void LoadSongs(List<Song> songs)

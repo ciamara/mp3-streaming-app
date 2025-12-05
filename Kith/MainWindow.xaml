@@ -52,7 +52,7 @@
                                HorizontalAlignment="Left"
                                FontSize="12"
                                Margin="0,0,0,0"
-                               Text="{Binding Index, Converter={StaticResource IndexConverter}}"
+                               Text="{Binding Index, Converter={StaticResource IndexConverter}}" 
                                FontWeight="SemiBold"
                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
 
@@ -266,13 +266,14 @@
                        Margin="25, 22, 45, 0"/>
 
             <!--ALL SONGS VIEW -->
-            <ListView x:Name="AllSongsView"
+            <ListView x:Name="SongsView"
                           ItemsSource="{Binding AllSongs}"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"
                           ItemTemplate="{StaticResource SongListViewTemplate}"
                           SelectionMode="Single"
-                          SelectedItem="{Binding SelectedItem}"
+                          SelectedItem="{Binding SelectedSong, Mode=TwoWay}"
+                          SelectionChanged="SongsView_SelectionChanged"
                           ShowsScrollingPlaceholders="True"
                           Margin="25, 25, 45, 25"
                           BorderThickness="0"
@@ -280,6 +281,18 @@
                           Grid.Column="1"
                           Grid.Row="1">
             </ListView>
+        </Grid>
+        <Grid Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center">
+            <MediaPlayerElement x:Name="MediaPlayerUI"
+                                AutoPlay="False" AreTransportControlsEnabled="True">
+                <MediaPlayerElement.TransportControls>
+                    <MediaTransportControls IsNextTrackButtonVisible="True"
+                                    IsPreviousTrackButtonVisible="True"
+                                    IsCompact="True"
+                                    IsRepeatButtonVisible="True"
+                                    IsRepeatEnabled="True"/>
+                </MediaPlayerElement.TransportControls>
+            </MediaPlayerElement>
         </Grid>
 
         <Grid Grid.Column="2" Grid.Row="1">
@@ -290,10 +303,12 @@
 
             <Image Grid.Column="2"
                    Grid.Row="0"
-                   Source="{Binding SelectedItem.Pictures, ElementName=AllSongsView, Converter={StaticResource IPictureImageConverter}}"
+                   Source="{Binding SelectedSong.Pictures, Converter={StaticResource IPictureImageConverter}}"
                    HorizontalAlignment="Stretch"
                    VerticalAlignment="Stretch"
-                   Margin="0,0,0,0"/>
+                   Margin="0,0,0,0"
+                   Tapped="AlbumCoverImage_Tapped" 
+                   IsHitTestVisible="True"/>
 
             <Grid Grid.Column="2" 
                       Grid.Row="1"
@@ -324,7 +339,7 @@
                                Text="title:"
                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
                 <TextBox x:Name="titleInput" Grid.Column="1" Grid.Row="0" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                         Text="{Binding SelectedItem.Title, ElementName=AllSongsView}">
+                         Text="{Binding SelectedSong.Title}">
                 </TextBox>
 
                 <TextBlock Grid.Column="0"
@@ -335,7 +350,7 @@
                                Text="artists:"
                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
                 <TextBox x:Name="artistsInput" Grid.Column="1" Grid.Row="1" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                         Text="{Binding SelectedItem.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', ', ElementName=AllSongsView}">
+                         Text="{Binding SelectedSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}">
                 </TextBox>
 
 
@@ -347,7 +362,7 @@
                             Text="album:"
                             Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
                 <TextBox x:Name="albumInput" Grid.Column="1" Grid.Row="2" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                         Text="{Binding SelectedItem.Album, ElementName=AllSongsView}">
+                         Text="{Binding SelectedSong.Album}">
                 </TextBox>
 
                 <TextBlock Grid.Column="0"
@@ -358,7 +373,7 @@
                            Text="year:"
                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
                 <TextBox x:Name="yearInput" Grid.Column="1" Grid.Row="3" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                         Text="{Binding SelectedItem.Year, ElementName=AllSongsView}">
+                         Text="{Binding SelectedSong.Year}">
                 </TextBox>
 
                 <TextBlock Grid.Column="0"
@@ -369,7 +384,7 @@
                            Text="track:"
                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
                 <TextBox x:Name="trackInput" Grid.Column="1" Grid.Row="4" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                         Text="{Binding SelectedItem.Track, ElementName=AllSongsView}">
+                         Text="{Binding SelectedSong.Track}">
                 </TextBox>
 
                 <TextBlock Grid.Column="0"
@@ -380,11 +395,7 @@
                            Text="genres:"
                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
                 <TextBox x:Name="genresInput" Grid.Column="1" Grid.Row="5" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                         Text="{Binding SelectedItem.Genres, Converter={StaticResource StringJoinConverter}, ConverterParameter=', ', ElementName=AllSongsView}">
-                </TextBox>
-
-                <TextBox x:Name="idInput" Grid.Column="1" Grid.Row="5" FontSize="12" Opacity="0" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                    Text="{Binding SelectedItem.ID, ElementName=AllSongsView}">
+                         Text="{Binding SelectedSong.Genres, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}">
                 </TextBox>
 
                 <Button x:Name="saveTagsButton"

@@ -11,6 +11,8 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
+            <BitmapImage x:Key="AlbumPlaceholder" UriSource="ms-appx:///Assets/albumplaceholder.png" />
+
             <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#111111"/>
             <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#1B1B1B"/>
             <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#D7CFCD"/>

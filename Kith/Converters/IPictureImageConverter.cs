@@ -2,7 +2,7 @@
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.IO;
-using System.Runtime.InteropServices.WindowsRuntime;
+using Microsoft.UI.Xaml;
 
 namespace Kith.Converters
 {
@@ -34,6 +34,10 @@ namespace Kith.Converters
                         System.Diagnostics.Debug.WriteLine($"Error converting image: {ex.Message}");
                     }
                 }
+            }
+            if (Application.Current.Resources.TryGetValue("AlbumPlaceholder", out object placeholder))
+            {
+                return placeholder;
             }
             return null;
         }
