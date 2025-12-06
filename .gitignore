@@ -1,5 +1,7 @@
 visuals/
 
+generic.xaml
+
 bin/
 obj/
 [Bb]uild/
