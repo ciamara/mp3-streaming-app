@@ -13,6 +13,12 @@
 
             <BitmapImage x:Key="AlbumPlaceholder" UriSource="ms-appx:///Assets/albumplaceholder.png" />
 
+            <Style TargetType="MediaTransportControls" x:Key="myTransportControlsStyle">
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Background" Value="Transparent" />
+            </Style>
+
             <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#111111"/>
             <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#1B1B1B"/>
             <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#D7CFCD"/>

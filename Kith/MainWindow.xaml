@@ -29,7 +29,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="60"/>
             <RowDefinition/>
-            <RowDefinition Height="80"/>
+            <RowDefinition Height="90"/>
         </Grid.RowDefinitions>
 
         <Grid.Resources>
@@ -46,6 +46,12 @@
                         <ColumnDefinition Width="2*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
+
+                    <Grid.ContextFlyout>
+                        <MenuFlyout x:Name="SongFlyoutContext">
+                            <MenuFlyoutItem Text="add to queue" Click="AddToQueue" Tag="{Binding}"/>
+                        </MenuFlyout>
+                    </Grid.ContextFlyout>
 
                     <TextBlock Grid.Column="0" 
                                VerticalAlignment="Center"
@@ -210,7 +216,7 @@
                        Fill="{ThemeResource ColorDownGradientBrush}"/>
 
         <Rectangle x:Name="BottomSection" 
-                   Height="70" 
+                   Height="80" 
                    MaxWidth="1530"
                    Margin="5,5,5,5"
                    Stroke="Transparent"  
@@ -283,14 +289,23 @@
             </ListView>
         </Grid>
         <Grid Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center">
-            <MediaPlayerElement x:Name="MediaPlayerUI"
-                                AutoPlay="False" AreTransportControlsEnabled="True">
+            <MediaPlayerElement x:Name="mediaPlayerElement"
+                                AutoPlay="False" AreTransportControlsEnabled="True"
+                                Background="Transparent">
                 <MediaPlayerElement.TransportControls>
                     <MediaTransportControls IsNextTrackButtonVisible="True"
-                                    IsPreviousTrackButtonVisible="True"
-                                    IsCompact="True"
-                                    IsRepeatButtonVisible="True"
-                                    IsRepeatEnabled="True"/>
+                                            IsPreviousTrackButtonVisible="True"
+                                            IsSeekBarVisible="True"
+                                            IsSeekEnabled="True"
+                                            IsCompact="False"
+                                            IsRepeatButtonVisible="True"
+                                            IsRepeatEnabled="True"
+                                            IsZoomButtonVisible="False"
+                                            IsZoomEnabled="False"
+                                            HorizontalAlignment="Center"
+                                            Background="Transparent"
+                                            Style="{StaticResource myTransportControlsStyle}">
+                    </MediaTransportControls>
                 </MediaPlayerElement.TransportControls>
             </MediaPlayerElement>
         </Grid>

@@ -1,15 +1,12 @@
-using GroupDocs.Metadata;
-using GroupDocs.Metadata.Formats.Audio;
-using Kith.Sources;
-using Microsoft.UI;
+﻿using Kith.Sources;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using System;
 using System.Collections.Generic;
+
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,6 +23,8 @@ namespace Kith
     {
         private object _windowSubclassingReference;
         private List<Song> Songs { get; set; } = new List<Song>();
+
+        private Queue queue { get; set; } = new Queue();
 
         private SongsView ViewModel { get; set; }
 
@@ -109,14 +108,13 @@ namespace Kith
         }
         private void saveTags(object sender, RoutedEventArgs e)
         {
-            MediaPlayer player = MediaPlayerUI.MediaPlayer;
-            lastPlayedPosition = player.Position;
+            lastPlayedPosition = mediaPlayerElement.MediaPlayer.Position;
             selectedSongBeforeUpdate = ViewModel.SelectedSong;
 
             string[] arrayArtists = artistsInput.Text.Split(',');
             string[] arrayGenres = genresInput.Text.Split(',');
-            uint iyear = Convert.ToUInt32(yearInput.Text, 16);
-            uint itrack = Convert.ToUInt32(trackInput.Text, 16);
+            uint iyear = Convert.ToUInt32(yearInput.Text, 10);
+            uint itrack = Convert.ToUInt32(trackInput.Text, 10);
 
             Song songToUpdate = ViewModel.SelectedSong;
 
@@ -176,11 +174,10 @@ namespace Kith
 
         private async void UpdateFile(Song songToUpdate)
         {
-            MediaPlayer player = MediaPlayerUI.MediaPlayer;
-            if (player.Source != null)
+            if (mediaPlayerElement.MediaPlayer.Source != null)
             {
-                player.Pause();
-                player.Source = null;
+                mediaPlayerElement.MediaPlayer.Pause();
+                mediaPlayerElement.MediaPlayer.Source = null;
             }
 
                 TagLib.File tfile = TagLib.File.Create(songToUpdate.FileName);
@@ -215,18 +212,16 @@ namespace Kith
         {
             if (song == null) return;
 
-            Windows.Media.Playback.MediaPlayer player = MediaPlayerUI.MediaPlayer;
-
             try
             {
                 Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(song.FileName);
 
                 Windows.Media.Core.MediaSource mediaSource = Windows.Media.Core.MediaSource.CreateFromStorageFile(file);
 
-                player.Source = mediaSource;
+                mediaPlayerElement.MediaPlayer.Source = mediaSource;
 
-                player.Position = lastPlayedPosition;
-                player.Play();
+                mediaPlayerElement.MediaPlayer.Position = lastPlayedPosition;
+                mediaPlayerElement.MediaPlayer.Play();
             }
             catch (Exception ex)
             {
@@ -263,17 +258,15 @@ namespace Kith
         }
         private async Task UpdateAlbumArt(Song song, StorageFile imageFile)
         {
- 
-            MediaPlayer playerEngine = MediaPlayerUI.MediaPlayer;
 
             bool isCurrentlySelected = (ViewModel.SelectedSong?.FileName == song.FileName);
 
-            if (isCurrentlySelected && playerEngine.Source != null)
+            if (isCurrentlySelected && mediaPlayerElement.MediaPlayer.Source != null)
             {
-                lastPlayedPosition = playerEngine.Position;
+                lastPlayedPosition = mediaPlayerElement.MediaPlayer.Position;
 
-                playerEngine.Pause();
-                playerEngine.Source = null;
+                mediaPlayerElement.MediaPlayer.Pause();
+                mediaPlayerElement.MediaPlayer.Source = null;
             }
 
             byte[] imageBytes;
@@ -303,6 +296,18 @@ namespace Kith
                 if (isCurrentlySelected)
                 {
                     await LoadAndPlaySong(songInstanceToUpdate, lastPlayedPosition);
+                }
+            }
+        }
+        private void AddToQueue(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menu)
+            {
+                if (menu.Tag is Song song)
+                {
+                    this.queue.add(song);
+                    this.queue.print();
+                    return;
                 }
             }
         }
