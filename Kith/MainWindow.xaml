@@ -302,7 +302,7 @@
                                             IsRepeatEnabled="True"
                                             IsZoomButtonVisible="False"
                                             IsZoomEnabled="False"
-                                            HorizontalAlignment="Center"
+                                            HorizontalAlignment="Stretch"
                                             Background="Transparent"
                                             Style="{StaticResource myTransportControlsStyle}">
                     </MediaTransportControls>
