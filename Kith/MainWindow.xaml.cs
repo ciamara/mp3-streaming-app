@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 using TagLib;
 using Windows.Foundation;
 using Windows.Media.Playback;
+using Windows.Services.Maps;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
@@ -24,9 +26,13 @@ namespace Kith
         private object _windowSubclassingReference;
         private List<Song> Songs { get; set; } = new List<Song>();
 
+        private List<Collection> Collections { get; set; } = new List<Collection>();
+
         private Queue queue { get; set; } = new Queue();
 
         private SongsView ViewModel { get; set; }
+
+        private CollectionsView CollectionViewModel { get; set; }
 
         private Song selectedSongBeforeUpdate;
         private TimeSpan lastPlayedPosition;
@@ -35,12 +41,16 @@ namespace Kith
         {
             this.InitializeComponent();
 
+            CollectionViewModel = new CollectionsView();
             ViewModel = new SongsView();
             LayoutRoot.DataContext = ViewModel;
-       
+            leftSection.DataContext = CollectionViewModel;
+            collectionInfo.DataContext = CollectionViewModel;
+
             //setting topsection of grid to be titlebar (in order to be draggable)
             CustomizeWindow();
             RefreshSongs();
+            InitializeCollections();
 
             //setting min window size
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -172,6 +182,31 @@ namespace Kith
             ViewModel.SelectedSong = selectedSongBeforeUpdate;
         }
 
+        private void InitializeCollections()
+        {
+            Collections.Clear();
+
+            BitmapImage housecover = new BitmapImage(new Uri("ms-appx:///Assets/house.png"));
+            BitmapImage heartcover = new BitmapImage(new Uri("ms-appx:///Assets/heart.png"));
+            double duration = 0.0;
+            uint num = 0;
+            foreach( var song in Songs)
+            {
+                double dur = song.Duration.TotalMinutes;
+                num += 1;
+                duration += dur;
+            }
+            duration = Math.Ceiling(duration);
+            Collection AllSongsCollection = new Collection("All Songs", housecover, "all songs", duration, num, Songs);
+
+            Collection LikedSongsCollection = new Collection("Liked Songs", heartcover, "liked songs");
+
+            Collections.Add(AllSongsCollection);
+            Collections.Add(LikedSongsCollection);
+
+            CollectionViewModel.LoadCollections(Collections);
+        }
+
         private async void UpdateFile(Song songToUpdate)
         {
             if (mediaPlayerElement.MediaPlayer.Source != null)
@@ -207,6 +242,11 @@ namespace Kith
                 lastPlayedPosition = TimeSpan.Zero;
                 await LoadAndPlaySong(ViewModel.SelectedSong, TimeSpan.Zero);
             }
+        }
+
+        private async void CollectionsView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+           
         }
         public async Task LoadAndPlaySong(Song song, TimeSpan playFrom)
         {

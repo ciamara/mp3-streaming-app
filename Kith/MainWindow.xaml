@@ -102,6 +102,15 @@
                        Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
                 </Grid>
             </DataTemplate>
+            <DataTemplate x:Key="CollectionListViewTemplate" x:DataType="sources:Collection">
+                <StackPanel Orientation="Horizontal" Padding="5">
+                    <Image Source="{Binding collection_cover}" Width="40" Height="40" Margin="0,0,10,0"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding collection_name}" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding collection_description}" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </StackPanel>
+            </DataTemplate>
             <Style TargetType="AppBarButton">
                 <Setter Property="Width" Value="50"/>
                 <Setter Property="Height" Value="50"/>
@@ -237,7 +246,69 @@
                        RadiusY="50"
                        Fill="{ThemeResource ColorDownGradientBrush}"/>
 
-        <Grid Grid.Column="1" Grid.Row="1">
+        <Grid x:Name="collectionInfo" Grid.Column="1" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="0.35*" />
+                <RowDefinition Height="1*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+
+            <Image Grid.Column="0"
+                   Grid.Row="0"
+                   Source="{Binding SelectedCollection.collection_cover}"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"
+                   Margin="25,25,0,0"
+                   IsHitTestVisible="True"/>
+
+            <TextBlock Grid.Column="1"
+                       Grid.Row="0"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Left"
+                       FontSize="30"
+                       FontWeight="ExtraBold"
+                       FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                       Margin="10,0,0,0"
+                       Text="{Binding SelectedCollection.collection_name}"
+                       Foreground="White"/>
+            
+            <TextBlock Grid.Column="1"
+                       Grid.Row="0"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Left"
+                       Margin="10,50,0,0"
+                       FontSize="16"
+                       Text="{Binding SelectedCollection.collection_description}"
+                       Foreground="{StaticResource BrokenWhite}"/>
+            
+            <TextBlock Grid.Column="1"
+                       Grid.Row="0"
+                       VerticalAlignment="Bottom"
+                       HorizontalAlignment="Left"
+                       Margin="10,20,0,0"
+                       FontSize="11"
+                       Foreground="{StaticResource BrokenWhite}">
+                <Run Text="{Binding SelectedCollection.collection_size}"/>
+                <Run Text="songs,"/>
+            </TextBlock>
+
+            <TextBlock Grid.Column="1"
+                       Grid.Row="0"
+                       VerticalAlignment="Bottom"
+                       HorizontalAlignment="Left"
+                       Margin="65,20,0,0"
+                       FontSize="11"
+                       Foreground="{StaticResource BrokenWhite}">
+                <Run Text="{Binding SelectedCollection.collection_duration}"/>
+                <Run Text="min"/>
+            </TextBlock>
+        </Grid>
+
+        <Grid x:Name="midSection" Grid.Column="1" Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="3*" />
                 <RowDefinition Height="5*" />
@@ -287,6 +358,31 @@
                           Grid.Column="1"
                           Grid.Row="1">
             </ListView>
+        </Grid>
+        <Grid x:Name="leftSection" Grid.Column="0" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1.5*" />
+                <RowDefinition Height="1*" />
+                <RowDefinition Height="0.75*" />
+                <RowDefinition Height="0.75*" />
+                <RowDefinition Height="7*" />
+            </Grid.RowDefinitions>
+
+            <!--ALL COLLECTIONS VIEW -->
+            <ListView x:Name="CollectionsView"
+              ItemsSource="{Binding AllCollections}"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch"
+              ItemTemplate="{StaticResource CollectionListViewTemplate}"
+              SelectionMode="Single"
+              SelectedItem="{Binding SelectedCollection, Mode=TwoWay}"
+              SelectionChanged="CollectionsView_SelectionChanged"
+              ShowsScrollingPlaceholders="True"
+              Margin="25, 25, 25, 25"
+              BorderThickness="0"
+              Grid.Row="4">
+            </ListView>
+
         </Grid>
         <Grid Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center">
             <MediaPlayerElement x:Name="mediaPlayerElement"

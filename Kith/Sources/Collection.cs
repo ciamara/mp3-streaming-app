@@ -1,29 +1,53 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using TagLib;
 using Windows.UI.Core;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace Kith.Sources
 {
-    class Collection
+    public class Collection : INotifyPropertyChanged
     {
-        private String collection_name { get; set; }
-        private Bitmap collection_cover { get; set; }
-        private String collection_description { get; set; }
-        private Double collection_duration { get; set; }
-        private uint collection_size { get; set; }
-        private List<Song> collection_songs { get; set; }
+        public String collection_name { get; set; }
+        public BitmapImage collection_cover { get; set; }
+        public String collection_description { get; set; }
+        public double collection_duration { get; set; }
+        public uint collection_size { get; set; }
+        public List<Song> collection_songs { get; set; }
 
         public Collection()
         {
             this.collection_name = "your playlist";
-            this.collection_cover = new Bitmap("ms - appx:///Assets/albumplaceholder.png", true);
+            this.collection_cover = new BitmapImage(new Uri("ms-appx:///Assets/albumplaceholder.png"));
             this.collection_description = "your playlist description";
+            this.collection_duration = 0.0;
+            this.collection_size = 0;
+
+            this.collection_songs = new List<Song>();
+        }
+
+        public Collection(String name, BitmapImage cover, String desc, double duration, uint size, List<Song> songs)
+        {
+            this.collection_name = name;
+            this.collection_cover = cover;
+            this.collection_description = desc;
+            this.collection_duration = duration;
+            this.collection_size = size;
+
+            this.collection_songs = songs;
+        }
+        public Collection(String name, BitmapImage cover, String desc)
+        {
+            this.collection_name = name;
+            this.collection_cover = cover;
+            this.collection_description = desc;
             this.collection_duration = 0.0;
             this.collection_size = 0;
 
@@ -54,6 +78,12 @@ namespace Kith.Sources
         public void ExtractCoverColors()
         {
 
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
     }
