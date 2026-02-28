@@ -14,9 +14,12 @@ namespace Kith.Sources
 
         public ObservableCollection<Song> AllSongs { get; set; }
 
+        public ObservableCollection<Song> CurrentCollectionSongs { get; set; }
+
         public SongsView()
         {
             AllSongs = new ObservableCollection<Song>();
+            CurrentCollectionSongs = new ObservableCollection<Song>();
         }
 
         public Song SelectedSong
@@ -34,11 +37,23 @@ namespace Kith.Sources
 
         public void LoadSongs(List<Song> songs)
         {
+            //AllSongs = new ObservableCollection<Song>(songs);
             AllSongs.Clear();
 
             foreach (var song in songs)
             {
                 AllSongs.Add(song);
+            }
+        }
+
+        public void SwapCurrentCollectionSelection(List<Song> currentSongs)
+        {
+            //CurrentCollectionSongs = new ObservableCollection<Song>(currentSongs);
+            CurrentCollectionSongs.Clear();
+
+            foreach (var song in currentSongs)
+            {
+                CurrentCollectionSongs.Add(song);
             }
         }
 

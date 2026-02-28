@@ -1,4 +1,7 @@
-﻿using System;
+﻿using ABI.Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media.Imaging;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,7 +12,6 @@ using System.Text;
 using System.Threading.Tasks;
 using TagLib;
 using Windows.UI.Core;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace Kith.Sources
 {
@@ -56,6 +58,9 @@ namespace Kith.Sources
         public void Add(Song song)
         {
             collection_songs.Add(song);
+            double dur = song.Duration.TotalMinutes;
+            collection_duration += dur;
+            collection_duration = Math.Ceiling(collection_duration);
         }
         public void addSongs(List<Song> songs)
         {

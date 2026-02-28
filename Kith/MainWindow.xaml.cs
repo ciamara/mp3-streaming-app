@@ -28,6 +28,12 @@ namespace Kith
 
         private List<Collection> Collections { get; set; } = new List<Collection>();
 
+        private Collection CurrentCollection { get; set; }
+
+        private double Volume { get; set; }
+
+        private bool Muted { get; set; }
+
         private Queue queue { get; set; } = new Queue();
 
         private SongsView ViewModel { get; set; }
@@ -51,6 +57,8 @@ namespace Kith
             CustomizeWindow();
             RefreshSongs();
             InitializeCollections();
+            ViewModel.SwapCurrentCollectionSelection(Songs);
+            CollectionViewModel.SelectedCollection = CurrentCollection;
 
             //setting min window size
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -201,10 +209,30 @@ namespace Kith
 
             Collection LikedSongsCollection = new Collection("Liked Songs", heartcover, "liked songs");
 
+            Collection Test2 = new Collection();
+            Collection Test1 = new Collection();
+            Collection Test3 = new Collection();
+            Collection Test4 = new Collection();
+            Collection Test5 = new Collection();
+            Collection Test6 = new Collection();
+            Collection Test7 = new Collection();
+            Collection Test8 = new Collection();
+
             Collections.Add(AllSongsCollection);
             Collections.Add(LikedSongsCollection);
+            Collections.Add(Test1);
+            Collections.Add(Test2);
+            Collections.Add(Test3);
+            Collections.Add(Test4);
+            Collections.Add(Test5);
+            Collections.Add(Test6);
+            Collections.Add(Test7);
+            Collections.Add(Test8);
+
 
             CollectionViewModel.LoadCollections(Collections);
+
+            CurrentCollection = AllSongsCollection;
         }
 
         private async void UpdateFile(Song songToUpdate)
@@ -244,9 +272,14 @@ namespace Kith
             }
         }
 
-        private async void CollectionsView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void CollectionsView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-           
+            if (CollectionViewModel.SelectedCollection != null && e.AddedItems.Count > 0)
+            {
+                CurrentCollection = CollectionViewModel.SelectedCollection;
+                List<Song> currentSongs = CurrentCollection.collection_songs;
+                ViewModel.SwapCurrentCollectionSelection(currentSongs);
+            }
         }
         public async Task LoadAndPlaySong(Song song, TimeSpan playFrom)
         {
@@ -351,5 +384,55 @@ namespace Kith
                 }
             }
         }
+        private void VolumeSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (mediaPlayerElement != null && mediaPlayerElement.MediaPlayer != null)
+            {
+                Volume = e.NewValue / 100.0;
+                if (Volume != 0)
+                {
+                    Muted = false;
+                    VolumeIcon.Glyph = "\uE767";
+                }
+                if(Volume == 0)
+                {
+                    Muted = true;
+                    VolumeIcon.Glyph = "\uE74F";
+                }
+                mediaPlayerElement.MediaPlayer.Volume = Volume;
+            }
+        }
+
+        private void MuteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (mediaPlayerElement != null && mediaPlayerElement.MediaPlayer != null)
+            {
+                if (Muted)
+                {
+                    Muted = false;
+                    mediaPlayerElement.MediaPlayer.Volume = Volume;
+                    VolumeIcon.Glyph = "\uE767";
+                }
+                else
+                {
+                    Muted = true;
+                    Volume = mediaPlayerElement.MediaPlayer.Volume;
+                    mediaPlayerElement.MediaPlayer.Volume = 0;
+                    VolumeIcon.Glyph = "\uE74F";
+                }
+                
+            }
+        }
+
+        private void QueueButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+        private void FullScreenButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+
     }
 }
