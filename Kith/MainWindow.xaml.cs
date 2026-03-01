@@ -17,6 +17,7 @@ using Windows.Media.Playback;
 using Windows.Services.Maps;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using static System.Net.Mime.MediaTypeNames;
 
 
 namespace Kith
@@ -29,6 +30,10 @@ namespace Kith
         private List<Collection> Collections { get; set; } = new List<Collection>();
 
         private Collection CurrentCollection { get; set; }
+
+        private Collection AllSongsCollection { get; set; }
+
+        private Collection LikedSongsCollection { get; set; }
 
         private double Volume { get; set; }
 
@@ -205,32 +210,30 @@ namespace Kith
                 duration += dur;
             }
             duration = Math.Ceiling(duration);
-            Collection AllSongsCollection = new Collection("All Songs", housecover, "all songs", duration, num, Songs);
+            AllSongsCollection = new Collection("All Songs", housecover, "all songs", duration, num, Songs, false);
 
-            Collection LikedSongsCollection = new Collection("Liked Songs", heartcover, "liked songs");
+            LikedSongsCollection = new Collection("Liked Songs", heartcover, "liked songs", false);
 
-            Collection Test2 = new Collection();
-            Collection Test1 = new Collection();
-            Collection Test3 = new Collection();
-            Collection Test4 = new Collection();
-            Collection Test5 = new Collection();
-            Collection Test6 = new Collection();
-            Collection Test7 = new Collection();
-            Collection Test8 = new Collection();
+            //Collection Test2 = new Collection();
+            //Collection Test1 = new Collection();
+            //Collection Test3 = new Collection();
+            //Collection Test4 = new Collection();
+            //Collection Test5 = new Collection();
+            //Collection Test6 = new Collection();
+            //Collection Test7 = new Collection();
+            //Collection Test8 = new Collection();
 
-            Collections.Add(AllSongsCollection);
-            Collections.Add(LikedSongsCollection);
-            Collections.Add(Test1);
-            Collections.Add(Test2);
-            Collections.Add(Test3);
-            Collections.Add(Test4);
-            Collections.Add(Test5);
-            Collections.Add(Test6);
-            Collections.Add(Test7);
-            Collections.Add(Test8);
+            //Collections.Add(Test1);
+            //Collections.Add(Test2);
+            //Collections.Add(Test3);
+            //Collections.Add(Test4);
+            //Collections.Add(Test5);
+            //Collections.Add(Test6);
+            //Collections.Add(Test7);
+            //Collections.Add(Test8);
 
 
-            CollectionViewModel.LoadCollections(Collections);
+            //CollectionViewModel.LoadCollections(Collections);
 
             CurrentCollection = AllSongsCollection;
         }
@@ -432,6 +435,63 @@ namespace Kith
         {
 
         }
+        private void AllSongsButton_Click(object sender, RoutedEventArgs e)
+        {
+            CollectionsView.SelectedIndex = -1;
+            CurrentCollection = AllSongsCollection;
+            CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
+            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
+        }
+        private void LikedSongsButton_Click(object sender, RoutedEventArgs e)
+        {
+            CollectionsView.SelectedIndex = -1;
+            CurrentCollection = LikedSongsCollection;
+            CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
+            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
+        }
+        private void NewCollectionButton_Click(object sender, RoutedEventArgs e)
+        {
+            Collection n = new Collection();
+            Collections.Add(n);
+            CollectionViewModel.LoadCollections(Collections);
+            CurrentCollection = n;
+            CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
+            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
+        }
+
+        private async void CollectionCoverImage_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+
+            if (CollectionViewModel.SelectedCollection != null && CollectionViewModel.SelectedCollection.editable)
+            {
+                FileOpenPicker openPicker = new FileOpenPicker();
+                openPicker.ViewMode = PickerViewMode.Thumbnail;
+                openPicker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+
+                openPicker.FileTypeFilter.Add(".jpg");
+                openPicker.FileTypeFilter.Add(".jpeg");
+                openPicker.FileTypeFilter.Add(".png");
+
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hwnd);
+
+                StorageFile file = await openPicker.PickSingleFileAsync();
+
+                if (file != null)
+                {
+                    BitmapImage bitmapImage = new BitmapImage();
+
+                    using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                    {
+                        await bitmapImage.SetSourceAsync(stream);
+                    }
+
+                    CollectionViewModel.SelectedCollection.collection_cover = bitmapImage;
+                }
+            }
+        }
+
 
 
     }

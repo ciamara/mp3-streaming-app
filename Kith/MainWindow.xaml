@@ -263,6 +263,7 @@
                    HorizontalAlignment="Stretch"
                    VerticalAlignment="Stretch"
                    Margin="25,25,0,0"
+                   Tapped="CollectionCoverImage_Tapped"
                    IsHitTestVisible="True"/>
 
             <TextBlock Grid.Column="1"
@@ -280,7 +281,7 @@
                        Grid.Row="0"
                        VerticalAlignment="Center"
                        HorizontalAlignment="Left"
-                       Margin="10,50,0,0"
+                       Margin="10,53,0,0"
                        FontSize="16"
                        Text="{Binding SelectedCollection.collection_description}"
                        Foreground="{StaticResource BrokenWhite}"/>
@@ -368,12 +369,76 @@
                 <RowDefinition Height="7*" />
             </Grid.RowDefinitions>
 
+            <Button x:Name="NewCollectionButton"
+                    Grid.Row="0"
+                    Click="NewCollectionButton_Click" 
+                    ClickMode="Release"
+                    Margin="0,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Foreground="{StaticResource BrokenWhite}"
+                    BorderBrush="Transparent"
+                    Background="Transparent">
+                <FontIcon x:Name="NewCollectionIcon" 
+                          Glyph="&#xECC8;" 
+                          FontSize="17" 
+                          VerticalAlignment="Center"/>
+            </Button>
+
+            <Button x:Name="AllSongsButton"
+                    Grid.Row="2"
+                    Click="AllSongsButton_Click" 
+                    ClickMode="Release"
+                    Margin="35,0,35,0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Foreground="{StaticResource BrokenWhite}"
+                    BorderBrush="Transparent"
+                    Background="Transparent">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <FontIcon x:Name="HouseIcon" 
+                              Glyph="&#xEA8A;" 
+                              FontSize="17" 
+                              VerticalAlignment="Center"/>
+                    <TextBlock VerticalAlignment="Center"
+                               FontSize="13"
+                               Margin="10,0,0,0"
+                               Text="All Songs"
+                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="LikedSongsButton"
+                    Grid.Row="3"
+                    Click="LikedSongsButton_Click" 
+                    ClickMode="Release"
+                    Margin="35,0,35,0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Foreground="{StaticResource BrokenWhite}"
+                    BorderBrush="Transparent"
+                    Background="Transparent">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <FontIcon x:Name="HeartIcon" 
+                              Glyph="&#xEB52;" 
+                              FontSize="17" 
+                              VerticalAlignment="Center"/>
+                    <TextBlock VerticalAlignment="Center"
+                               Margin="10,0,0,0"
+                               FontSize="13"
+                               Text="Liked Songs"
+                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+            </Button>
+
             <Rectangle Grid.Row="4"
-                       Height="1" 
+                       Height="0.5" 
                        VerticalAlignment="Top"
                        HorizontalAlignment="Stretch"
                        Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                       Margin="25, 22, 45, 0"/>
+                       Margin="25, 4, 45, 0"/>
 
             <!--ALL COLLECTIONS VIEW -->
             <ListView x:Name="CollectionsView"
@@ -385,7 +450,7 @@
               SelectedItem="{Binding SelectedCollection, Mode=TwoWay}"
               SelectionChanged="CollectionsView_SelectionChanged"
               ShowsScrollingPlaceholders="True"
-              Margin="25, 25, 25, 25"
+              Margin="25, 5, 25, 25"
               BorderThickness="0"
               Grid.Row="4">
             </ListView>

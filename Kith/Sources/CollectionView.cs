@@ -47,5 +47,10 @@ namespace Kith.Sources
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        public void ChangeSelectedCollection(Collection c)
+        {
+            SelectedCollection = c;
+        }
     }
 }
