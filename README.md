@@ -29,7 +29,9 @@
 
 ## Gallery
 Main window (current progress)
-![Main Window](md_screens/progress1.png)
+![Main Window](md_screens/screen.png)          
+Main window with liked songs collection open         
+![Main Window](md_screens/screen2.png)
 
 
 
