@@ -16,6 +16,20 @@ namespace Kith.Sources
 
         public ObservableCollection<Song> CurrentCollectionSongs { get; set; }
 
+        private Song _playingSong;
+        public Song PlayingSong
+        {
+            get => _playingSong;
+            set
+            {
+                if (_playingSong != value)
+                {
+                    _playingSong = value;
+                    OnPropertyChanged(nameof(PlayingSong));
+                }
+            }
+        }
+
         public SongsView()
         {
             AllSongs = new ObservableCollection<Song>();

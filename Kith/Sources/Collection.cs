@@ -1,25 +1,26 @@
-﻿using ABI.Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
+﻿using Microsoft.UI.Xaml.Media.Imaging;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using TagLib;
-using Windows.UI.Core;
 
 namespace Kith.Sources
 {
     public class Collection : INotifyPropertyChanged
     {
         private BitmapImage _collection_cover;
-        public String collection_name { get; set; }
+        private string _collection_name;
+        private string _collection_description;
+        private double _collection_duration;
+        private uint _collection_size;
+
+        public string collection_name
+        {
+            get => _collection_name;
+            set { _collection_name = value; OnPropertyChanged(); }
+        }
+
         public BitmapImage collection_cover
         {
             get => _collection_cover;
@@ -32,11 +33,33 @@ namespace Kith.Sources
                 }
             }
         }
-        public String collection_description { get; set; }
-        public double collection_duration { get; set; }
-        public uint collection_size { get; set; }
+
+        public string collection_description
+        {
+            get => _collection_description;
+            set { _collection_description = value; OnPropertyChanged(); }
+        }
+
+        public double collection_duration
+        {
+            get => _collection_duration;
+            set { _collection_duration = value; OnPropertyChanged(); }
+        }
+
+        public uint collection_size
+        {
+            get => _collection_size;
+            set { _collection_size = value; OnPropertyChanged(); }
+        }
+
         public bool editable { get; set; }
-        public List<Song> collection_songs { get; set; }
+        public List<Song> _collection_songs { get; set; }
+
+        public List<Song> collection_songs
+        {
+            get => _collection_songs;
+            set { _collection_songs = value; OnPropertyChanged(); }
+        }
 
         public Collection()
         {
@@ -46,62 +69,71 @@ namespace Kith.Sources
             this.collection_duration = 0.0;
             this.collection_size = 0;
             this.editable = true;
-
             this.collection_songs = new List<Song>();
         }
 
-        public Collection(String name, BitmapImage cover, String desc, double duration, uint size, List<Song> songs, bool editable)
+        public Collection(string name, BitmapImage cover, string desc, double duration, uint size, List<Song> songs, bool editable)
         {
             this.collection_name = name;
             this.collection_cover = cover;
             this.collection_description = desc;
             this.collection_duration = duration;
             this.collection_size = size;
-
             this.collection_songs = songs;
-
             this.editable = editable;
         }
-        public Collection(String name, BitmapImage cover, String desc, bool editable)
+
+        public Collection(string name, BitmapImage cover, string desc, bool editable)
         {
             this.collection_name = name;
             this.collection_cover = cover;
             this.collection_description = desc;
             this.collection_duration = 0.0;
             this.collection_size = 0;
-
             this.collection_songs = new List<Song>();
-
             this.editable = editable;
         }
+
         public void Add(Song song)
         {
             collection_songs.Add(song);
-            double dur = song.Duration.TotalMinutes;
-            collection_duration += dur;
-            collection_duration = Math.Ceiling(collection_duration);
+            RecalculateStats();
         }
+
+        public void Remove(Song song)
+        {
+            if (collection_songs.Remove(song))
+            {
+                RecalculateStats();
+            }
+        }
+
         public void addSongs(List<Song> songs)
         {
             foreach (Song song in songs)
             {
                 this.collection_songs.Add(song);
             }
+            OnPropertyChanged(nameof(collection_songs));
         }
+
         public void Print()
         {
             int index = 0;
-            System.Console.WriteLine("Queue:");
+            System.Diagnostics.Debug.WriteLine("Queue:");
             foreach (Song song in collection_songs)
             {
-                System.Console.Write(index++ + " ");
-                System.Console.WriteLine(song.Title);
+                System.Diagnostics.Debug.WriteLine($"{index++} {song.Title}");
             }
         }
 
-        public void ExtractCoverColors()
+        private void RecalculateStats()
         {
+            collection_duration = Math.Ceiling(collection_songs.Sum(s => s.Duration.TotalMinutes));
+            collection_size = (uint)collection_songs.Count;
 
+            OnPropertyChanged(nameof(collection_duration));
+            OnPropertyChanged(nameof(collection_size));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -109,6 +141,5 @@ namespace Kith.Sources
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
     }
 }

@@ -35,8 +35,19 @@ namespace Kith.Sources
         }
         private IPicture[] _pictures;
 
-
-
+        public bool _liked { get; set; } = false;
+        public bool liked
+        {
+            get => _liked;
+            set
+            {
+                if (_liked != value)
+                {
+                    _liked = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public Song(int index, string filename, string title, string[] artists, string album, uint year, uint track, string[] genres, TimeSpan duration, IPicture[] pictures)
         {

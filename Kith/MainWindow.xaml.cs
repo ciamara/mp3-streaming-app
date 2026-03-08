@@ -52,6 +52,8 @@ namespace Kith
         {
             this.InitializeComponent();
 
+            mediaPlayerElement.MediaPlayer.MediaEnded += MediaPlayer_MediaEnded;
+
             CollectionViewModel = new CollectionsView();
             ViewModel = new SongsView();
             LayoutRoot.DataContext = ViewModel;
@@ -123,11 +125,11 @@ namespace Kith
         }
         private void GoBackBtn_Click(object sender, RoutedEventArgs e)
         {
-           
+
         }
         private void GoForwardBtn_Click(object sender, RoutedEventArgs e)
         {
-      
+
         }
         private void saveTags(object sender, RoutedEventArgs e)
         {
@@ -203,7 +205,7 @@ namespace Kith
             BitmapImage heartcover = new BitmapImage(new Uri("ms-appx:///Assets/heart.png"));
             double duration = 0.0;
             uint num = 0;
-            foreach( var song in Songs)
+            foreach (var song in Songs)
             {
                 double dur = song.Duration.TotalMinutes;
                 num += 1;
@@ -246,17 +248,17 @@ namespace Kith
                 mediaPlayerElement.MediaPlayer.Source = null;
             }
 
-                TagLib.File tfile = TagLib.File.Create(songToUpdate.FileName);
+            TagLib.File tfile = TagLib.File.Create(songToUpdate.FileName);
 
-                tfile.Tag.Title = songToUpdate.Title;
-                tfile.Tag.Artists = songToUpdate.Artists;
-                tfile.Tag.Album = songToUpdate.Album;
-                tfile.Tag.Year = songToUpdate.Year;
-                tfile.Tag.Track = songToUpdate.Track;
-                tfile.Tag.Genres = songToUpdate.Genres;
-                tfile.Tag.Pictures = songToUpdate.Pictures;
+            tfile.Tag.Title = songToUpdate.Title;
+            tfile.Tag.Artists = songToUpdate.Artists;
+            tfile.Tag.Album = songToUpdate.Album;
+            tfile.Tag.Year = songToUpdate.Year;
+            tfile.Tag.Track = songToUpdate.Track;
+            tfile.Tag.Genres = songToUpdate.Genres;
+            tfile.Tag.Pictures = songToUpdate.Pictures;
 
-                tfile.Save();
+            tfile.Save();
 
             selectedSongBeforeUpdate = songToUpdate;
 
@@ -290,6 +292,8 @@ namespace Kith
 
             try
             {
+                ViewModel.PlayingSong = song;
+
                 Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(song.FileName);
 
                 Windows.Media.Core.MediaSource mediaSource = Windows.Media.Core.MediaSource.CreateFromStorageFile(file);
@@ -381,6 +385,7 @@ namespace Kith
             {
                 if (menu.Tag is Song song)
                 {
+                    System.Console.WriteLine($"{song.Title}");
                     this.queue.add(song);
                     this.queue.print();
                     return;
@@ -397,7 +402,7 @@ namespace Kith
                     Muted = false;
                     VolumeIcon.Glyph = "\uE767";
                 }
-                if(Volume == 0)
+                if (Volume == 0)
                 {
                     Muted = true;
                     VolumeIcon.Glyph = "\uE74F";
@@ -423,7 +428,7 @@ namespace Kith
                     mediaPlayerElement.MediaPlayer.Volume = 0;
                     VolumeIcon.Glyph = "\uE74F";
                 }
-                
+
             }
         }
 
@@ -452,47 +457,194 @@ namespace Kith
         private void NewCollectionButton_Click(object sender, RoutedEventArgs e)
         {
             Collection n = new Collection();
-            Collections.Add(n);
-            CollectionViewModel.LoadCollections(Collections);
+
+            CollectionViewModel.AllCollections.Add(n);
+
+            CollectionViewModel.SelectedCollection = n;
             CurrentCollection = n;
-            CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
-            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
+
+            ViewModel.SwapCurrentCollectionSelection(n.collection_songs);
         }
 
         private async void CollectionCoverImage_Tapped(object sender, TappedRoutedEventArgs e)
         {
             e.Handled = true;
+            var target = CollectionViewModel.SelectedCollection;
 
-            if (CollectionViewModel.SelectedCollection != null && CollectionViewModel.SelectedCollection.editable)
+            if (target != null && target.editable)
             {
                 FileOpenPicker openPicker = new FileOpenPicker();
                 openPicker.ViewMode = PickerViewMode.Thumbnail;
-                openPicker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hwnd);
 
                 openPicker.FileTypeFilter.Add(".jpg");
                 openPicker.FileTypeFilter.Add(".jpeg");
                 openPicker.FileTypeFilter.Add(".png");
 
-                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-                WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hwnd);
-
                 StorageFile file = await openPicker.PickSingleFileAsync();
 
                 if (file != null)
                 {
-                    BitmapImage bitmapImage = new BitmapImage();
-
-                    using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                    try
                     {
-                        await bitmapImage.SetSourceAsync(stream);
-                    }
+                        StorageFolder localFolder = ApplicationData.Current.LocalFolder;
 
-                    CollectionViewModel.SelectedCollection.collection_cover = bitmapImage;
+                        string extension = file.FileType;
+                        string newFileName = $"cover_{Guid.NewGuid()}{extension}";
+
+                        StorageFile copiedFile = await file.CopyAsync(localFolder, newFileName, NameCollisionOption.ReplaceExisting);
+
+                        DispatcherQueue.TryEnqueue(() =>
+                        {
+                            BitmapImage bitmapImage = new BitmapImage(new Uri($"ms-appdata:///local/{newFileName}"));
+                            target.collection_cover = bitmapImage;
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to copy or set image: {ex.Message}");
+                    }
                 }
             }
         }
 
+        private async void CollectionName_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+            var target = CollectionViewModel.SelectedCollection;
 
+            if (target != null && target.editable)
+            {
+                Microsoft.UI.Xaml.Controls.TextBox inputTextBox = new Microsoft.UI.Xaml.Controls.TextBox
+                {
+                    Text = target.collection_name,
+                    SelectionStart = 0,
+                    SelectionLength = target.collection_name.Length
+                };
+
+                ContentDialog dialog = new ContentDialog
+                {
+                    Title = "Rename Playlist",
+                    Content = inputTextBox,
+                    PrimaryButtonText = "Save",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = this.Content.XamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+
+                if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(inputTextBox.Text))
+                {
+                    target.collection_name = inputTextBox.Text;
+                }
+            }
+        }
+
+        private async void CollectionDescription_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+            var target = CollectionViewModel.SelectedCollection;
+
+            if (target != null && target.editable)
+            {
+                Microsoft.UI.Xaml.Controls.TextBox inputTextBox = new Microsoft.UI.Xaml.Controls.TextBox
+                {
+                    Text = target.collection_description,
+                    SelectionStart = 0,
+                    SelectionLength = target.collection_description.Length
+                };
+
+                ContentDialog dialog = new ContentDialog
+                {
+                    Title = "New Description",
+                    Content = inputTextBox,
+                    PrimaryButtonText = "Save",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = this.Content.XamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+
+                if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(inputTextBox.Text))
+                {
+                    target.collection_description = inputTextBox.Text;
+                }
+            }
+        }
+
+        private void MediaPlayer_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                LoadAndPlaySong(queue.pop(), TimeSpan.Zero);
+            });
+        }
+
+        private void LikeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel.PlayingSong != null)
+            {
+                ViewModel.PlayingSong.liked = !ViewModel.PlayingSong.liked;
+
+                if (ViewModel.PlayingSong.liked)
+                {
+                    if (!LikedSongsCollection.collection_songs.Contains(ViewModel.PlayingSong))
+                    {
+                        LikedSongsCollection.Add(ViewModel.PlayingSong);
+
+                        if (CurrentCollection == LikedSongsCollection)
+                        {
+                            ViewModel.SwapCurrentCollectionSelection(LikedSongsCollection.collection_songs);
+                        }
+                    }
+                }
+                else
+                {
+                    LikedSongsCollection.Remove(ViewModel.PlayingSong);
+                    if (CurrentCollection == LikedSongsCollection)
+                    {
+                        ViewModel.SwapCurrentCollectionSelection(LikedSongsCollection.collection_songs);
+                    }
+                }
+            }
+        }
+
+        private void AddToCollectionButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ListLikeButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            if (sender is Button clickedButton)
+            {
+                if (clickedButton.DataContext is Song clickedSong)
+                {
+                    clickedSong.liked = !clickedSong.liked;
+
+                    if (clickedSong.liked)
+                    {
+                        if (!LikedSongsCollection.collection_songs.Contains(clickedSong))
+                        {
+                            LikedSongsCollection.Add(clickedSong);
+                        }
+                    }
+                    else
+                    {
+                        LikedSongsCollection.Remove(clickedSong);
+                    }
+
+                    if (CurrentCollection == LikedSongsCollection)
+                    {
+                        ViewModel.SwapCurrentCollectionSelection(LikedSongsCollection.collection_songs);
+                    }
+                }
+            }
+        }
 
     }
 }
