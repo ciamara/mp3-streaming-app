@@ -83,7 +83,7 @@
                 <Setter Property="Width" Value="40" />
             </Style>
 
-                <Style x:Key="playertogglebuttonstyle" TargetType="AppBarToggleButton">
+            <Style x:Key="playertogglebuttonstyle" TargetType="AppBarToggleButton">
                 <Setter Property="Height" Value="40" />
                 <Setter Property="Width" Value="40" />
                 <Setter Property="Padding" Value="0"/>
@@ -518,7 +518,7 @@
                 </Setter>
             </Style>
 
-            <Style x:Key="myTransportControlsStyle" TargetType="MediaTransportControls">
+            <Style x:Key="myTransportControlsStyle" TargetType="local:CustomMediaTransportControls">
                 <Setter Property="IsTabStop" Value="False" />
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="FlowDirection" Value="LeftToRight" />
@@ -530,7 +530,7 @@
                 <Setter Property="CornerRadius" Value="{ThemeResource OverlayCornerRadius}" />
                 <Setter Property="Template">
                     <Setter.Value>
-                        <ControlTemplate TargetType="MediaTransportControls">
+                        <ControlTemplate TargetType="local:CustomMediaTransportControls">
                             <Grid x:Name="RootGrid" Background="Transparent">
 
                                 <Grid.Resources>
@@ -691,8 +691,10 @@
                                                 <Setter Target="LeftSidePlayBorder.Visibility" Value="Visible" />
                                                 <Setter Target="TimeTextGrid.Visibility" Value="Collapsed" />
                                                 <Setter Target="MediaTransportControls_Command_Border.(Grid.Column)" Value="2" />
-                                                --><!--<Setter Target="MediaTransportControls_Command_Border.(Grid.Row)" Value="1" /> -->
-                                                <!--<Setter Target="ControlPanelGrid.Height" Value="48" /> --><!--
+                                                -->
+                                            <!--<Setter Target="MediaTransportControls_Command_Border.(Grid.Row)" Value="1" /> -->
+                                            <!--<Setter Target="ControlPanelGrid.Height" Value="48" /> -->
+                                            <!--
                                                 <Setter Target="MediaControlsCommandBar.Margin" Value="0" />
                                                 <Setter Target="PlayPauseButton.Visibility" Value="Collapsed" />
                                                 <Setter Target="ProgressSlider.Margin" Value="{ThemeResource MediaTransportControlsProgressSliderCompactMargin}" />
@@ -855,7 +857,7 @@
                                                             <FontIcon Glyph="&#xF8AD;" />
                                                         </AppBarButton.Icon>
                                                     </AppBarButton>
-                                                    <AppBarToggleButton x:Name='RepeatButton'
+                                                    <AppBarToggleButton x:Name='CustomRepeatButton'
                                                                         Style='{StaticResource playertogglebuttonstyle}'
                                                                         MediaTransportControlsHelper.DropoutOrder='1'
                                                                         Visibility='Collapsed'>
@@ -863,7 +865,7 @@
                                                             <SymbolIcon x:Name="RepeatSymbol" Symbol="RepeatAll" VerticalAlignment="Bottom"/>
                                                         </AppBarToggleButton.Icon>
                                                     </AppBarToggleButton>
-                                                    
+
                                                 </CommandBar.PrimaryCommands>
                                             </CommandBar>
                                         </Border>
@@ -875,6 +877,14 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
+
+            <Style x:Key="FlyoutStyle" TargetType="FlyoutPresenter">
+                <Setter Property="Background" Value="#963719"/>
+                <Setter Property="BorderBrush" Value="#402218"/>
+                <Setter Property="BorderThickness" Value="5"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="0"/>
             </Style>
 
             <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#111111"/>

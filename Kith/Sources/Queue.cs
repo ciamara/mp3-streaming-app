@@ -9,7 +9,7 @@ namespace Kith.Sources
 {
     internal class Queue
     {
-        private List<Song> queue { get; set; }
+        public List<Song> queue { get; set; }
 
         public Queue()
         {

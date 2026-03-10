@@ -39,6 +39,10 @@ namespace Kith
 
         private bool Muted { get; set; }
 
+        private bool repeatEnabled { get; set; }
+
+        private bool shuffleEnabled { get; set; }
+
         private Queue queue { get; set; } = new Queue();
 
         private SongsView ViewModel { get; set; }
@@ -46,6 +50,7 @@ namespace Kith
         private CollectionsView CollectionViewModel { get; set; }
 
         private Song selectedSongBeforeUpdate;
+        private Song previousSong;
         private TimeSpan lastPlayedPosition;
 
         public MainWindow()
@@ -59,6 +64,7 @@ namespace Kith
             LayoutRoot.DataContext = ViewModel;
             leftSection.DataContext = CollectionViewModel;
             collectionInfo.DataContext = CollectionViewModel;
+            FlyoutCollectionsList.DataContext = CollectionViewModel;
 
             //setting topsection of grid to be titlebar (in order to be draggable)
             CustomizeWindow();
@@ -314,7 +320,7 @@ namespace Kith
 
             if (ViewModel.SelectedSong == null)
             {
-                System.Console.WriteLine("No song selected.");
+                //System.Console.WriteLine("No song selected.");
                 return;
             }
 
@@ -385,7 +391,7 @@ namespace Kith
             {
                 if (menu.Tag is Song song)
                 {
-                    System.Console.WriteLine($"{song.Title}");
+                    //System.Console.WriteLine($"{song.Title}");
                     this.queue.add(song);
                     this.queue.print();
                     return;
@@ -577,10 +583,38 @@ namespace Kith
 
         private void MediaPlayer_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
         {
-            DispatcherQueue.TryEnqueue(() =>
+            previousSong = ViewModel.PlayingSong;
+            if (repeatEnabled)
             {
-                LoadAndPlaySong(queue.pop(), TimeSpan.Zero);
-            });
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    LoadAndPlaySong(ViewModel.PlayingSong, TimeSpan.Zero);
+                });
+            }
+            else if (shuffleEnabled)
+            {
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    LoadAndPlaySong(CurrentCollection.RandomNext(ViewModel.PlayingSong), TimeSpan.Zero);
+                });
+            }
+            else
+            {
+                if (queue.queue.Count != 0)
+                {
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        LoadAndPlaySong(queue.pop(), TimeSpan.Zero);
+                    });
+                }
+                else
+                {
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        LoadAndPlaySong(CurrentCollection.Next(ViewModel.PlayingSong), TimeSpan.Zero);
+                    });
+                }
+            }
         }
 
         private void LikeButton_Click(object sender, RoutedEventArgs e)
@@ -612,11 +646,6 @@ namespace Kith
             }
         }
 
-        private void AddToCollectionButton_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
         private void ListLikeButton_Click(object sender, RoutedEventArgs e)
         {
 
@@ -646,5 +675,116 @@ namespace Kith
             }
         }
 
+        private void DeleteCollection(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menu)
+            {
+                if (menu.Tag is Collection collection)
+                {
+                    CollectionViewModel.AllCollections.Remove(collection);
+
+                    if(CurrentCollection == collection)
+                    {
+                        CollectionsView.SelectedIndex = -1;
+                        CurrentCollection = AllSongsCollection;
+                        CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
+                        ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
+                    }
+                    return;
+                }
+            }
+        }
+        private void FlyoutCollectionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is Collection targetCollection)
+            {
+                if (ViewModel.PlayingSong != null)
+                {
+                    if (!targetCollection.collection_songs.Contains(ViewModel.PlayingSong))
+                    {
+                        targetCollection.Add(ViewModel.PlayingSong);
+
+                        if (CurrentCollection == targetCollection)
+                        {
+                            ViewModel.SwapCurrentCollectionSelection(targetCollection.collection_songs);
+                        }
+                    }
+                }
+
+                FlyoutCollectionsList.SelectedIndex = -1;
+
+                AddToCollectionFlyout.Hide();
+            }
+        }
+
+        private void PreviousTrackClicked(object sender, EventArgs e)
+        {
+            if (mediaPlayerElement.MediaPlayer != null)
+            {
+                if (mediaPlayerElement.MediaPlayer.Position.TotalSeconds > 2)
+                {
+                    mediaPlayerElement.MediaPlayer.Position = TimeSpan.Zero;
+                }
+                else
+                {
+                    if (previousSong != null)
+                    {
+                        LoadAndPlaySong(previousSong, TimeSpan.Zero);
+                    }
+                    else
+                    {
+                        mediaPlayerElement.MediaPlayer.Position = TimeSpan.Zero;
+                    }
+                }
+            }
+        }
+
+        private void NextTrackClicked(object sender, EventArgs e)
+        {
+            if (mediaPlayerElement.MediaPlayer != null)
+            {
+                if (queue.queue.Count != 0)
+                {
+                    LoadAndPlaySong(queue.pop(), TimeSpan.Zero);
+                }
+                else
+                {
+                    mediaPlayerElement.MediaPlayer.Position = ViewModel.PlayingSong.Duration;
+                }
+
+            }
+        }
+
+        private void RepeatClicked(object sender, EventArgs e)
+        {
+            if (mediaPlayerElement.MediaPlayer != null && sender is CustomMediaTransportControls transportControls)
+            {
+                repeatEnabled = !repeatEnabled;
+
+                if (repeatEnabled)
+                {
+                    shuffleEnabled = false;
+
+                    transportControls.SetShuffleState(false);
+                }
+
+            }
+        }
+
+        private void ShuffleClicked(object sender, EventArgs e)
+        {
+            if (mediaPlayerElement.MediaPlayer != null && sender is CustomMediaTransportControls transportControls)
+            {
+                shuffleEnabled = !shuffleEnabled;
+
+                if (shuffleEnabled)
+                {
+                    repeatEnabled = false;
+
+                    transportControls.SetRepeatState(false);
+                }
+
+            }
+        }
     }
 }

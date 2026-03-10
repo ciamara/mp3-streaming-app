@@ -122,15 +122,7 @@
                         
                 </Grid>
             </DataTemplate>
-            <DataTemplate x:Key="CollectionListViewTemplate" x:DataType="sources:Collection">
-                <StackPanel Orientation="Horizontal" Padding="5">
-                    <Image Source="{Binding collection_cover}" Width="40" Height="40" Margin="0,0,10,0"/>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding collection_name}" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding collection_description}" FontSize="11" Foreground="Gray"/>
-                    </StackPanel>
-                </StackPanel>
-            </DataTemplate>
+  
             <Style TargetType="AppBarButton">
                 <Setter Property="Width" Value="50"/>
                 <Setter Property="Height" Value="50"/>
@@ -413,7 +405,7 @@
                            Text="{Binding PlayingSong.Title}"
                            FontSize="15"
                            FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                           FontWeight="Bold"
+                           FontWeight="SemiBold"
                            Foreground="White"/>
 
                 <TextBlock Grid.Row="1"
@@ -427,6 +419,24 @@
             </Grid>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0" Spacing="5">
+                
+                <StackPanel.Resources>
+                    
+                    <DataTemplate x:Key="FlyoutCollectionTemplate" x:DataType="sources:Collection">
+                        <StackPanel Orientation="Horizontal" Padding="5">
+                            <Image Source="{Binding collection_cover}" Stretch="UniformToFill" Width="30" Height="30" Margin="-10,0,10,0"/>
+                            <TextBlock Text="{Binding collection_name}" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="13" Foreground="White"/>
+                        </StackPanel>
+                    </DataTemplate>
+
+                    <Style x:Key="FlyoutStyle" TargetType="FlyoutPresenter">
+                        <Setter Property="Background" Value="#402218"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="CornerRadius" Value="12"/>
+                        <Setter Property="Padding" Value="0"/>
+                    </Style>
+                    
+                </StackPanel.Resources>
 
                 <Button Click="LikeButton_Click" 
                         ClickMode="Release"
@@ -441,8 +451,7 @@
                               FontSize="15"/>
                 </Button>
 
-                <Button Click="AddToCollectionButton_Click" 
-                        ClickMode="Release"
+                <Button ClickMode="Release"
                         Width="35" Height="35"
                         Margin="0,0,0,0"
                         Padding="0"
@@ -452,6 +461,23 @@
                         Background="Transparent"
                         ToolTipService.ToolTip="Add to collection">
                     <FontIcon x:Name="AddToCollectionIcon" Glyph="&#xECC8;" FontSize="15"/>
+                    
+                    <Button.Flyout>
+                        <Flyout x:Name="AddToCollectionFlyout" FlyoutPresenterStyle="{StaticResource FlyoutStyle}">
+
+                            <ListView x:Name="FlyoutCollectionsList"
+                                      ItemsSource="{Binding AllCollections}"
+                                      ItemTemplate="{StaticResource FlyoutCollectionTemplate}"
+                                      SelectionMode="Single"
+                                      SelectionChanged="FlyoutCollectionsList_SelectionChanged"
+                                      Width="220"
+                                      MaxHeight="300"
+                                      ShowsScrollingPlaceholders="True"
+                                      BorderThickness="0">
+                            </ListView>
+
+                        </Flyout>
+                    </Button.Flyout>
                 </Button>
 
             </StackPanel>
@@ -459,6 +485,32 @@
         </Grid>
         
         <Grid x:Name="leftSection" Grid.Column="0" Grid.Row="1">
+
+            <Grid.Resources>
+                <DataTemplate x:Key="CollectionListViewTemplate" x:DataType="sources:Collection">
+                    <StackPanel Orientation="Horizontal" Padding="5">
+
+                        <StackPanel.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="delete" 
+                                        Click="DeleteCollection" 
+                                        Tag="{Binding}"/>
+                            </MenuFlyout>
+                        </StackPanel.ContextFlyout>
+                        
+                        <Image Source="{Binding collection_cover}" 
+                               Width="30" 
+                               Height="30" 
+                               Margin="-5,0,10,0"
+                               Stretch="UniformToFill"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding collection_name}" FontWeight="Light"/>
+                            <TextBlock Text="{Binding collection_description}" FontSize="11" Foreground="Gray" FontWeight="Light"/>
+                        </StackPanel>
+                    </StackPanel>
+                </DataTemplate>
+            </Grid.Resources>
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="1.5*" />
                 <RowDefinition Height="1*" />
@@ -471,7 +523,10 @@
                     Grid.Row="0"
                     Click="NewCollectionButton_Click" 
                     ClickMode="Release"
-                    Margin="0,0,0,0"
+                    Margin="10,0,0,0"
+                    Width="40"
+                    Height="40"
+                    Padding="0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Stretch"
                     Foreground="{StaticResource BrokenWhite}"
@@ -559,19 +614,23 @@
                                 AutoPlay="False" AreTransportControlsEnabled="True"
                                 Background="Transparent">
                 <MediaPlayerElement.TransportControls>
-                    <MediaTransportControls IsNextTrackButtonVisible="True"
-                                            IsPreviousTrackButtonVisible="True"
-                                            IsSeekBarVisible="True"
-                                            IsSeekEnabled="True"
-                                            IsCompact="False"
-                                            IsRepeatButtonVisible="True"
-                                            IsRepeatEnabled="True"
-                                            IsZoomButtonVisible="False"
-                                            IsZoomEnabled="False"
-                                            HorizontalAlignment="Stretch"
-                                            Background="Transparent"
-                                            Style="{StaticResource myTransportControlsStyle}">
-                    </MediaTransportControls>
+                    <local:CustomMediaTransportControls PreviousTrackClicked="PreviousTrackClicked"
+                                                        NextTrackClicked="NextTrackClicked"
+                                                        RepeatClicked="RepeatClicked"
+                                                        ShuffleClicked="ShuffleClicked"
+                                                        IsNextTrackButtonVisible="True"
+                                                        IsPreviousTrackButtonVisible="True"
+                                                        IsSeekBarVisible="True"
+                                                        IsSeekEnabled="True"
+                                                        IsCompact="False"
+                                                        IsRepeatButtonVisible="True"
+                                                        IsRepeatEnabled="True"
+                                                        IsZoomButtonVisible="False"
+                                                        IsZoomEnabled="False"
+                                                        HorizontalAlignment="Stretch"
+                                                        Background="Transparent"
+                                                        Style="{StaticResource myTransportControlsStyle}" />
+
                 </MediaPlayerElement.TransportControls>
             </MediaPlayerElement>
         </Grid>

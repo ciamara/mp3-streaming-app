@@ -108,6 +108,50 @@ namespace Kith.Sources
             }
         }
 
+        public Song Next(Song song)
+        {
+            if (collection_songs == null || collection_songs.Count == 0)
+            {
+                return null;
+            }
+
+            int currentIndex = collection_songs.IndexOf(song);
+
+            if (currentIndex == -1)
+            {
+                return null;
+            }
+
+            int nextIndex = (currentIndex + 1) % collection_songs.Count;
+
+            return collection_songs[nextIndex];
+        }
+
+        public Song RandomNext(Song currentSong)
+        {
+            if (collection_songs == null || collection_songs.Count <= 1)
+            {
+                return currentSong;
+            }
+
+            int excludeIndex = collection_songs.IndexOf(currentSong);
+            Random rnd = new Random();
+
+            if (excludeIndex == -1)
+            {
+                return collection_songs[rnd.Next(collection_songs.Count)];
+            }
+
+            int randomIndex = rnd.Next(0, collection_songs.Count - 1);
+
+            if (randomIndex >= excludeIndex)
+            {
+                randomIndex++;
+            }
+
+            return collection_songs[randomIndex];
+        }
+
         public void addSongs(List<Song> songs)
         {
             foreach (Song song in songs)

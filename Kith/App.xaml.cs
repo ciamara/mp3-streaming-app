@@ -57,5 +57,10 @@ namespace Kith
         {
 
         }
+
+        private void PreviousTrackButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
