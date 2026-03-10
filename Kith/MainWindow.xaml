@@ -39,6 +39,18 @@
             <converters:IPictureImageConverter x:Key="IPictureImageConverter"/>
             <converters:BooleanToGlyphConverter x:Key="BoolToGlyph" />
             <converters:NullToVisibilityConverter x:Key="NullToVisible" />
+            <Style x:Key="FlyoutStyle" TargetType="MenuFlyoutPresenter">
+                <Setter Property="Background" Value="#732e18"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="Padding" Value="0"/>
+            </Style>
+            <DataTemplate x:Key="ListFlyoutCollectionTemplate" x:DataType="sources:Collection">
+                <StackPanel Orientation="Horizontal" Padding="5">
+                    <Image Source="{Binding collection_cover}" Stretch="UniformToFill" Width="30" Height="30" Margin="-10,0,10,0"/>
+                    <TextBlock Text="{Binding collection_name}" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="13" Foreground="White"/>
+                </StackPanel>
+            </DataTemplate>
             <DataTemplate x:Key="SongListViewTemplate">
                 <Grid Padding="0,5">
                     <Grid.ColumnDefinitions>
@@ -47,13 +59,15 @@
                         <ColumnDefinition Width="1.7*" />
                         <ColumnDefinition Width="1.7*" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="40" />
+                        <ColumnDefinition Width="60"/>
                     </Grid.ColumnDefinitions>
 
                     <Grid.ContextFlyout>
-                        <MenuFlyout x:Name="SongFlyoutContext">
+                        <MenuFlyout x:Name="SongFlyoutContext" MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}" Opening="SongFlyoutContext_Opening">
                             <MenuFlyoutItem Text="add to queue" Click="AddToQueue" Tag="{Binding}"/>
+                            <MenuFlyoutItem Text="delete from collection" Click="DeleteFromCollection" Tag="{Binding}"/>
                         </MenuFlyout>
+
                     </Grid.ContextFlyout>
 
                     <TextBlock Grid.Column="0" 
@@ -104,22 +118,52 @@
                        Text="{Binding Duration, Converter={StaticResource DurationCeilingConverter}}"
                        Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
 
-                    <Button Grid.Column="5"
-                            HorizontalAlignment="Right"
-                            Click="ListLikeButton_Click" 
-                            ClickMode="Release"
-                            Width="25" Height="25"
-                            Padding="0"
-                            Margin="10,0,0,0"
-                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                            BorderBrush="Transparent"
-                            Background="Transparent"
-                            ToolTipService.ToolTip="ListLike">
-                        <FontIcon x:Name="LikeIcon" 
-                                  Glyph="{Binding liked, Converter={StaticResource BoolToGlyph}}" 
-                                  FontSize="13"/>
-                    </Button>
-                        
+                    <StackPanel Orientation="Horizontal" Grid.Column="5" Spacing="0" Padding="0" HorizontalAlignment="Right">
+                        <Button Click="ListLikeButton_Click" 
+                                ClickMode="Release"
+                                Width="25" Height="25"
+                                Padding="0"
+                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                                BorderBrush="Transparent"
+                                Background="Transparent"
+                                ToolTipService.ToolTip="ListLike">
+                            <FontIcon x:Name="LikeIcon" 
+                                      Glyph="{Binding liked, Converter={StaticResource BoolToGlyph}}" 
+                                      FontSize="13"/>
+                        </Button>
+
+                        <Button HorizontalAlignment="Right"
+                                ClickMode="Release"
+                                Width="25" Height="25"
+                                Padding="0"
+                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                                BorderBrush="Transparent"
+                                Background="Transparent"
+                                ToolTipService.ToolTip="add to collection">
+                            <FontIcon x:Name="AddToCollectionIcon" 
+                                      Glyph="&#xECC8;" 
+                                      FontSize="13"/>
+                            <Button.Flyout>
+                                <Flyout x:Name="ListAddToCollectionFlyout" FlyoutPresenterStyle="{StaticResource FlyoutStyle}">
+
+                                    <ListView x:Name="ListFlyoutCollectionsList"
+                                              Loaded="ListFlyoutCollectionsList_Loaded"
+                                              ItemTemplate="{StaticResource ListFlyoutCollectionTemplate}"
+                                              SelectionMode="Single"
+                                              SelectionChanged="ListFlyoutCollectionsList_SelectionChanged"
+                                              Width="200"
+                                              MaxHeight="250"
+                                              ShowsScrollingPlaceholders="True"
+                                              BorderThickness="0">
+                                    </ListView>
+
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+
+                    
+
                 </Grid>
             </DataTemplate>
   
@@ -351,7 +395,7 @@
                    Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
                 <TextBlock Grid.Column="2" Text="album" FontWeight="Light" FontSize="12" Margin="14, 0, 0, 0" HorizontalAlignment="Left"
                    Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
-                <TextBlock Grid.Column="3" Text="duration" FontWeight="Light" FontSize="12" HorizontalAlignment="Left" Margin="0, 0, 46, 0"
+                <TextBlock Grid.Column="3" Text="duration" FontWeight="Light" FontSize="12" HorizontalAlignment="Left" Margin="0, 0, 67, 0"
                    Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
             </Grid>
 
@@ -487,14 +531,20 @@
         <Grid x:Name="leftSection" Grid.Column="0" Grid.Row="1">
 
             <Grid.Resources>
+                <Style x:Key="FlyoutStyle" TargetType="MenuFlyoutPresenter">
+                    <Setter Property="Background" Value="#732e18"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="CornerRadius" Value="12"/>
+                    <Setter Property="Padding" Value="0"/>
+                </Style>
                 <DataTemplate x:Key="CollectionListViewTemplate" x:DataType="sources:Collection">
                     <StackPanel Orientation="Horizontal" Padding="5">
 
                         <StackPanel.ContextFlyout>
-                            <MenuFlyout>
+                            <MenuFlyout MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}">
                                 <MenuFlyoutItem Text="delete" 
-                                        Click="DeleteCollection" 
-                                        Tag="{Binding}"/>
+                                                Click="DeleteCollection" 
+                                                Tag="{Binding}"/>
                             </MenuFlyout>
                         </StackPanel.ContextFlyout>
                         

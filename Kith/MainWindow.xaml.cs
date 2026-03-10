@@ -717,6 +717,33 @@ namespace Kith
             }
         }
 
+        private void ListFlyoutCollectionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is Collection targetCollection)
+            {
+                if (sender is ListView listView && listView.DataContext is Song targetSong)
+                {
+                    if (!targetCollection.collection_songs.Contains(targetSong))
+                    {
+                        targetCollection.Add(targetSong);
+
+                        if (CurrentCollection == targetCollection)
+                        {
+                            ViewModel.SwapCurrentCollectionSelection(targetCollection.collection_songs);
+                        }
+                    }
+
+                    listView.SelectedIndex = -1;
+
+                    var popups = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetOpenPopupsForXamlRoot(listView.XamlRoot);
+                    foreach (var popup in popups)
+                    {
+                        popup.IsOpen = false;
+                    }
+                }
+            }
+        }
+
         private void PreviousTrackClicked(object sender, EventArgs e)
         {
             if (mediaPlayerElement.MediaPlayer != null)
@@ -786,5 +813,63 @@ namespace Kith
 
             }
         }
+
+        private void DeleteFromCollection(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menu)
+            {
+                if (menu.Tag is Song song)
+                {
+                    if (CurrentCollection != AllSongsCollection)
+                    {
+                        if (CurrentCollection == LikedSongsCollection)
+                        {
+                            song.liked = false;
+                            LikedSongsCollection.Remove(song);
+                            if (CurrentCollection == LikedSongsCollection)
+                            {
+                                ViewModel.SwapCurrentCollectionSelection(LikedSongsCollection.collection_songs);
+                            }
+                        }
+                        else
+                        {
+                            CurrentCollection.Remove(song);
+                            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
+                        }     
+                    }
+                    return;
+                }
+            }
+        }
+
+        private void SongFlyoutContext_Opening(object sender, object e)
+        {
+            if (sender is MenuFlyout flyout)
+            {
+                foreach (var item in flyout.Items)
+                {
+                    if (item is MenuFlyoutItem menuItem && menuItem.Text == "delete from collection")
+                    {
+                        if (CurrentCollection == AllSongsCollection)
+                        {
+                            menuItem.Visibility = Visibility.Collapsed;
+                        }
+                        else
+                        {
+                            menuItem.Visibility = Visibility.Visible;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ListFlyoutCollectionsList_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is ListView listView)
+            {
+                listView.ItemsSource = CollectionViewModel.AllCollections;
+            }
+        }
+
     }
 }
