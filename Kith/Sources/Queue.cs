@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,13 +8,13 @@ using Windows.Devices.Printers;
 
 namespace Kith.Sources
 {
-    internal class Queue
+    public class Queue
     {
-        public List<Song> queue { get; set; }
+        public ObservableCollection<Song> queue { get; set; }
 
         public Queue()
         {
-            queue = new List<Song>();
+            queue = new ObservableCollection<Song>();
         }
 
         public void add(Song song)
@@ -43,6 +44,11 @@ namespace Kith.Sources
                 System.Console.Write(index++ + " ");
                 System.Console.WriteLine(song.Title);
             }
+        }
+
+        public void Remove(Song s)
+        {
+            this.queue.Remove(s);
         }
     }
 }

@@ -43,7 +43,10 @@ namespace Kith
 
         private bool shuffleEnabled { get; set; }
 
-        private Queue queue { get; set; } = new Queue();
+        bool queueVisible { get; set; } = false;
+        bool tagEditorVisible { get; set; } = true;
+
+        //private Queue queue { get; set; } = new Queue();
 
         private SongsView ViewModel { get; set; }
 
@@ -137,17 +140,34 @@ namespace Kith
         {
 
         }
+        private void SongsView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.InRecycleQueue) return;
+
+            if (args.ItemContainer.ContentTemplateRoot is Grid rootGrid)
+            {
+                if (rootGrid.FindName("Index") is TextBlock textBlock)
+                {
+                    textBlock.Text = (args.ItemIndex + 1).ToString();
+                }
+            }
+        }
+
         private void saveTags(object sender, RoutedEventArgs e)
         {
+
+            if (ViewModel.PlayingSong == null) return;
+
             lastPlayedPosition = mediaPlayerElement.MediaPlayer.Position;
             selectedSongBeforeUpdate = ViewModel.SelectedSong;
 
             string[] arrayArtists = artistsInput.Text.Split(',');
             string[] arrayGenres = genresInput.Text.Split(',');
-            uint iyear = Convert.ToUInt32(yearInput.Text, 10);
-            uint itrack = Convert.ToUInt32(trackInput.Text, 10);
 
-            Song songToUpdate = ViewModel.SelectedSong;
+            uint.TryParse(yearInput.Text, out uint iyear);
+            uint.TryParse(trackInput.Text, out uint itrack);
+
+            Song songToUpdate = ViewModel.PlayingSong;
 
             songToUpdate.Title = titleInput.Text;
             songToUpdate.Artists = arrayArtists;
@@ -159,6 +179,7 @@ namespace Kith
             UpdateFile(songToUpdate);
 
             RefreshSongs();
+            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
         private void MainSearch_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
         {
@@ -173,31 +194,56 @@ namespace Kith
         {
 
         }
+
+        private void CollectionCoverGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (CollectionCoverImage != null)
+            {
+                double minSize = Math.Min(e.NewSize.Width, e.NewSize.Height);
+                CollectionCoverImage.Width = minSize;
+                CollectionCoverImage.Height = minSize;
+            }
+        }
         private void RefreshSongs()
         {
             Songs.Clear();
 
-            var song_files = Directory.EnumerateFiles("C:\\Users\\kotel\\Music", "*.*", SearchOption.TopDirectoryOnly)
-            .Where(s => s.EndsWith(".mp3"));
-            int index = 0;
-            foreach (var song_file in song_files)
+            string musicPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+
+            if (!Directory.Exists(musicPath)) return;
+
+            try
             {
-                TagLib.File tfile = TagLib.File.Create(song_file);
+                var song_files = Directory.EnumerateFiles(musicPath, "*.*", SearchOption.TopDirectoryOnly)
+                .Where(s => s.EndsWith(".mp3"));
 
-                string currentTitle = tfile.Tag.Title;
-                string[] currentArtists = tfile.Tag.Artists;
-                string currentAlbum = tfile.Tag.Album;
-                uint currentYear = tfile.Tag.Year;
-                uint currentTrack = tfile.Tag.Track;
-                string[] currentGenres = tfile.Tag.Genres;
-                TimeSpan currentDuration = tfile.Properties.Duration;
-                IPicture[] currentPicture = tfile.Tag.Pictures;
+                foreach (var song_file in song_files)
+                {
+                    try
+                    {
+                        using (TagLib.File tfile = TagLib.File.Create(song_file))
+                        {
+                            string currentTitle = tfile.Tag.Title ?? Path.GetFileNameWithoutExtension(song_file);
+                            string[] currentArtists = tfile.Tag.Artists ?? Array.Empty<string>();
+                            string currentAlbum = tfile.Tag.Album ?? "Unknown Album";
+                            uint currentYear = tfile.Tag.Year;
+                            uint currentTrack = tfile.Tag.Track;
+                            string[] currentGenres = tfile.Tag.Genres ?? Array.Empty<string>();
+                            TimeSpan currentDuration = tfile.Properties.Duration;
+                            IPicture[] currentPicture = tfile.Tag.Pictures;
 
-                Song currentSong = new Song(index, song_file, currentTitle, currentArtists, currentAlbum, currentYear, currentTrack, currentGenres, currentDuration, currentPicture);
-                Songs.Add(currentSong);
-
-                index += 1;
-
+                            Song currentSong = new Song(song_file, currentTitle, currentArtists, currentAlbum, currentYear, currentTrack, currentGenres, currentDuration, currentPicture);
+                            Songs.Add(currentSong);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+                }
+            }
+            catch (Exception)
+            {
             }
             ViewModel.LoadSongs(Songs);
             ViewModel.SelectedSong = selectedSongBeforeUpdate;
@@ -221,27 +267,6 @@ namespace Kith
             AllSongsCollection = new Collection("All Songs", housecover, "all songs", duration, num, Songs, false);
 
             LikedSongsCollection = new Collection("Liked Songs", heartcover, "liked songs", false);
-
-            //Collection Test2 = new Collection();
-            //Collection Test1 = new Collection();
-            //Collection Test3 = new Collection();
-            //Collection Test4 = new Collection();
-            //Collection Test5 = new Collection();
-            //Collection Test6 = new Collection();
-            //Collection Test7 = new Collection();
-            //Collection Test8 = new Collection();
-
-            //Collections.Add(Test1);
-            //Collections.Add(Test2);
-            //Collections.Add(Test3);
-            //Collections.Add(Test4);
-            //Collections.Add(Test5);
-            //Collections.Add(Test6);
-            //Collections.Add(Test7);
-            //Collections.Add(Test8);
-
-
-            //CollectionViewModel.LoadCollections(Collections);
 
             CurrentCollection = AllSongsCollection;
         }
@@ -391,9 +416,7 @@ namespace Kith
             {
                 if (menu.Tag is Song song)
                 {
-                    //System.Console.WriteLine($"{song.Title}");
-                    this.queue.add(song);
-                    this.queue.print();
+                    ViewModel.SongQueue.add(song);
                     return;
                 }
             }
@@ -440,8 +463,18 @@ namespace Kith
 
         private void QueueButton_Click(object sender, RoutedEventArgs e)
         {
+            ViewModel.IsQueueVisible = !ViewModel.IsQueueVisible;
 
+            if (ViewModel.IsQueueVisible == true)
+            {
+                QueueIcon.Glyph = "\uE8EC";
+            }
+            else if (ViewModel.IsQueueVisible == false)
+            {
+                QueueIcon.Glyph = "\uE71D";
+            }
         }
+
         private void FullScreenButton_Click(object sender, RoutedEventArgs e)
         {
 
@@ -600,11 +633,11 @@ namespace Kith
             }
             else
             {
-                if (queue.queue.Count != 0)
+                if (ViewModel.SongQueue.queue.Count != 0)
                 {
                     DispatcherQueue.TryEnqueue(() =>
                     {
-                        LoadAndPlaySong(queue.pop(), TimeSpan.Zero);
+                        LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
                     });
                 }
                 else
@@ -770,9 +803,9 @@ namespace Kith
         {
             if (mediaPlayerElement.MediaPlayer != null)
             {
-                if (queue.queue.Count != 0)
+                if (ViewModel.SongQueue.queue.Count != 0)
                 {
-                    LoadAndPlaySong(queue.pop(), TimeSpan.Zero);
+                    LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
                 }
                 else
                 {
@@ -871,5 +904,12 @@ namespace Kith
             }
         }
 
+        private void RemoveFromQueue(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is Song songToRemove)
+            {
+                ViewModel.SongQueue.Remove(songToRemove);
+            }
+        }
     }
 }

@@ -16,6 +16,8 @@ namespace Kith.Sources
 
         public ObservableCollection<Song> CurrentCollectionSongs { get; set; }
 
+        public Queue SongQueue { get; set; }
+
         private Song _playingSong;
         public Song PlayingSong
         {
@@ -30,10 +32,30 @@ namespace Kith.Sources
             }
         }
 
+        private bool _isQueueVisible = false;
+        public bool IsQueueVisible
+        {
+            get => _isQueueVisible;
+            set
+            {
+                if (_isQueueVisible != value)
+                {
+                    _isQueueVisible = value;
+                    OnPropertyChanged(nameof(IsQueueVisible));
+                    OnPropertyChanged(nameof(QueueVisibility));
+                    OnPropertyChanged(nameof(TagEditorVisibility));
+                }
+            }
+        }
+
+        public Microsoft.UI.Xaml.Visibility QueueVisibility => _isQueueVisible ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+        public Microsoft.UI.Xaml.Visibility TagEditorVisibility => !_isQueueVisible ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+
         public SongsView()
         {
             AllSongs = new ObservableCollection<Song>();
             CurrentCollectionSongs = new ObservableCollection<Song>();
+            SongQueue = new Queue();
         }
 
         public Song SelectedSong
@@ -51,7 +73,6 @@ namespace Kith.Sources
 
         public void LoadSongs(List<Song> songs)
         {
-            //AllSongs = new ObservableCollection<Song>(songs);
             AllSongs.Clear();
 
             foreach (var song in songs)
@@ -60,9 +81,18 @@ namespace Kith.Sources
             }
         }
 
+        public void LoadCurrentCollectionSongs(List<Song> songs)
+        {
+            CurrentCollectionSongs.Clear();
+
+            foreach (var song in songs)
+            {
+                CurrentCollectionSongs.Add(song);
+            }
+        }
+
         public void SwapCurrentCollectionSelection(List<Song> currentSongs)
         {
-            //CurrentCollectionSongs = new ObservableCollection<Song>(currentSongs);
             CurrentCollectionSongs.Clear();
 
             foreach (var song in currentSongs)

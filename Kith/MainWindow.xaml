@@ -35,7 +35,6 @@
         <Grid.Resources>
             <converters:CeilingConverter x:Key="DurationCeilingConverter"/>
             <converters:StringJoinConverter x:Key="StringJoinConverter"/>
-            <converters:IndexConverter x:Key="IndexConverter"/>
             <converters:IPictureImageConverter x:Key="IPictureImageConverter"/>
             <converters:BooleanToGlyphConverter x:Key="BoolToGlyph" />
             <converters:NullToVisibilityConverter x:Key="NullToVisible" />
@@ -70,12 +69,21 @@
 
                     </Grid.ContextFlyout>
 
-                    <TextBlock Grid.Column="0" 
+                    <!--<TextBlock Grid.Column="0" 
                                VerticalAlignment="Center"
                                HorizontalAlignment="Left"
                                FontSize="12"
                                Margin="0,0,0,0"
                                Text="{Binding Index, Converter={StaticResource IndexConverter}}" 
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>-->
+
+                    <TextBlock x:Name="Index" 
+                               Grid.Column="0" 
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Left"
+                               FontSize="12"
+                               Margin="0,0,0,0"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
 
@@ -181,7 +189,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0"
+            <!--<StackPanel Grid.Column="0"
                     Orientation="Horizontal"
                     VerticalAlignment="Top"
                     Spacing="0">
@@ -200,9 +208,9 @@
                         <SymbolIcon Symbol="Forward"/>
                     </AppBarButton.Icon>
                 </AppBarButton>
-            </StackPanel>
+            </StackPanel>-->
 
-            <AutoSuggestBox x:Name="MainSearch"
+            <!--<AutoSuggestBox x:Name="MainSearch"
                         PlaceholderText="Search..."
                         TextChanged="MainSearch_TextChanged"
                         QueryIcon="Find"
@@ -223,7 +231,7 @@
                     <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
                     <SolidColorBrush x:Key="TextControlBackgroundGotFocus" Color="{StaticResource FoxyDark}"/>
                 </AutoSuggestBox.Resources>
-            </AutoSuggestBox>
+            </AutoSuggestBox>-->
 
             <StackPanel Grid.Column="2"
                     Orientation="Horizontal"
@@ -318,11 +326,13 @@
                   Margin="25,0,0,0"
                   Background="Transparent"
                   Tapped="CollectionCoverImage_Tapped"
+                  SizeChanged="CollectionCoverGrid_SizeChanged"
                   IsTapEnabled="True">
 
-                <Image Source="{Binding SelectedCollection.collection_cover, Mode=OneWay}"
-                       HorizontalAlignment="Stretch"
-                       VerticalAlignment="Stretch"
+                <Image x:Name="CollectionCoverImage"
+                       Source="{Binding SelectedCollection.collection_cover, Mode=OneWay}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
                        Stretch="UniformToFill"
                        IsHitTestVisible="False"/>
             </Grid>
@@ -353,7 +363,7 @@
                        Grid.Row="0"
                        VerticalAlignment="Bottom"
                        HorizontalAlignment="Left"
-                       Margin="10,20,0,0"
+                       Margin="10,0,0,8"
                        FontSize="11"
                        Foreground="{StaticResource BrokenWhite}">
                 <Run Text="{Binding SelectedCollection.collection_size}"/>
@@ -364,7 +374,7 @@
                        Grid.Row="0"
                        VerticalAlignment="Bottom"
                        HorizontalAlignment="Left"
-                       Margin="65,20,0,0"
+                       Margin="65,0,0,8"
                        FontSize="11"
                        Foreground="{StaticResource BrokenWhite}">
                 <Run Text="{Binding SelectedCollection.collection_duration}"/>
@@ -408,6 +418,7 @@
 
             <!--ALL SONGS VIEW -->
             <ListView x:Name="SongsView"
+                      ContainerContentChanging="SongsView_ContainerContentChanging"
                           ItemsSource="{Binding CurrentCollectionSongs}"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"
@@ -742,7 +753,66 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Column="2" Grid.Row="1">
+        <Grid Grid.Column="2" Grid.Row="1" Visibility="{Binding QueueVisibility}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+              Margin="0, 10, 0, 20">
+            <Grid.Resources>
+                <Style x:Key="FlyoutStyle" TargetType="MenuFlyoutPresenter">
+                    <Setter Property="Background" Value="#732e18"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="CornerRadius" Value="12"/>
+                    <Setter Property="Padding" Value="0"/>
+                </Style>
+            </Grid.Resources>
+            
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" 
+                           Text="Queue" 
+                           FontSize="18" 
+                           HorizontalAlignment="Center"
+                           Margin="15,10,30,10" 
+                           Foreground="White"
+                           FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                           FontWeight="SemiBold"/>
+
+            <Rectangle Grid.Row="0"
+                       Height="0.5" 
+                       VerticalAlignment="Bottom"
+                       HorizontalAlignment="Stretch"
+                       Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                       Margin="25, 4, 45, 3"/>  
+
+            <ListView Grid.Row="1" 
+                          ItemsSource="{Binding SongQueue.queue}"
+                          Margin="15,0,15,0"
+                          ShowsScrollingPlaceholders="True"
+                          BorderThickness="0">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="sources:Song">
+                        <StackPanel Orientation="Horizontal" Padding="5">
+                            
+                            <StackPanel.ContextFlyout>
+                                <MenuFlyout x:Name="QueueFlyoutContext" MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}">
+                                    <MenuFlyoutItem Text="remove from queue" Click="RemoveFromQueue" Tag="{Binding}"/>
+                                </MenuFlyout>
+
+                            </StackPanel.ContextFlyout>
+                            
+                            <Image Source="{Binding Pictures, Converter={StaticResource IPictureImageConverter}}" Width="30" Height="30" Stretch="UniformToFill" Margin="0,0,10,0"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}" FontSize="11" Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+
+        <Grid Grid.Column="2" Grid.Row="1" Visibility="{Binding TagEditorVisibility}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*" />
                 <RowDefinition Height="5*" />
@@ -785,7 +855,7 @@
                                Margin="10,0,0,0"
                                Text="title:"
                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="titleInput" Grid.Column="1" Grid.Row="0" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                <TextBox x:Name="titleInput" Grid.Column="1" Grid.Row="0" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Left"
                          Text="{Binding PlayingSong.Title}">
                 </TextBox>
 
@@ -796,7 +866,7 @@
                                Margin="10,0,0,0"
                                Text="artists:"
                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="artistsInput" Grid.Column="1" Grid.Row="1" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                <TextBox x:Name="artistsInput" Grid.Column="1" Grid.Row="1" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
                          Text="{Binding PlayingSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}">
                 </TextBox>
 
@@ -808,7 +878,7 @@
                             Margin="10,0,0,0"
                             Text="album:"
                             Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="albumInput" Grid.Column="1" Grid.Row="2" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                <TextBox x:Name="albumInput" Grid.Column="1" Grid.Row="2" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
                          Text="{Binding PlayingSong.Album}">
                 </TextBox>
 
@@ -819,7 +889,7 @@
                            Margin="10,0,0,0"
                            Text="year:"
                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="yearInput" Grid.Column="1" Grid.Row="3" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                <TextBox x:Name="yearInput" Grid.Column="1" Grid.Row="3" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
                          Text="{Binding PlayingSong.Year}">
                 </TextBox>
 
@@ -830,7 +900,7 @@
                            Margin="10,0,0,0"
                            Text="track:"
                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="trackInput" Grid.Column="1" Grid.Row="4" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                <TextBox x:Name="trackInput" Grid.Column="1" Grid.Row="4" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
                          Text="{Binding PlayingSong.Track}">
                 </TextBox>
 
@@ -841,7 +911,7 @@
                            Margin="10,0,0,0"
                            Text="genres:"
                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="genresInput" Grid.Column="1" Grid.Row="5" FontSize="12" FontWeight="SemiBold" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                <TextBox x:Name="genresInput" Grid.Column="1" Grid.Row="5" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
                          Text="{Binding PlayingSong.Genres, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}">
                 </TextBox>
 

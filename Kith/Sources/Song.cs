@@ -12,15 +12,94 @@ namespace Kith.Sources
 {
     public class Song : INotifyPropertyChanged
     {
-        public int Index { get; private set; }
         public string FileName { get; set; }
-        public string Title { get; set; }
-        public string[] Artists { get; set; }
-        public string Album { get; set; }
-        public uint Year { get; set; }
-        public uint Track { get; set; }
-        public string[] Genres { get; set; }
+
+        private string _title;
+        public string Title
+        {
+            get => _title;
+            set
+            {
+                if (_title != value)
+                {
+                    _title = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string[] _artists;
+        public string[] Artists
+        {
+            get => _artists;
+            set
+            {
+                if (_artists != value)
+                {
+                    _artists = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _album;
+        public string Album
+        {
+            get => _album;
+            set
+            {
+                if (_album != value)
+                {
+                    _album = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private uint _year;
+        public uint Year
+        {
+            get => _year;
+            set
+            {
+                if (_year != value)
+                {
+                    _year = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private uint _track;
+        public uint Track
+        {
+            get => _track;
+            set
+            {
+                if (_track != value)
+                {
+                    _track = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string[] _genres;
+        public string[] Genres
+        {
+            get => _genres;
+            set
+            {
+                if (_genres != value)
+                {
+                    _genres = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public TimeSpan Duration { get; set; }
+
         public IPicture[] Pictures
         {
             get => _pictures;
@@ -49,9 +128,8 @@ namespace Kith.Sources
             }
         }
 
-        public Song(int index, string filename, string title, string[] artists, string album, uint year, uint track, string[] genres, TimeSpan duration, IPicture[] pictures)
+        public Song(string filename, string title, string[] artists, string album, uint year, uint track, string[] genres, TimeSpan duration, IPicture[] pictures)
         {
-            Index = index;
             FileName = filename;
             Title = title;
             Artists = artists;
