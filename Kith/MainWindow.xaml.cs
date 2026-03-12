@@ -10,9 +10,11 @@ using System.Collections.Generic;
 
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using TagLib;
 using Windows.Foundation;
+using Windows.Graphics.Imaging;
 using Windows.Media.Playback;
 using Windows.Services.Maps;
 using Windows.Storage;
@@ -26,8 +28,6 @@ namespace Kith
     {
         private object _windowSubclassingReference;
         private List<Song> Songs { get; set; } = new List<Song>();
-
-        private List<Collection> Collections { get; set; } = new List<Collection>();
 
         private Collection CurrentCollection { get; set; }
 
@@ -76,6 +76,8 @@ namespace Kith
             ViewModel.SwapCurrentCollectionSelection(Songs);
             CollectionViewModel.SelectedCollection = CurrentCollection;
 
+            LoadState();
+
             //setting min window size
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
 
@@ -94,6 +96,12 @@ namespace Kith
             AppWindow.SetPresenter(presenter);
 
             SizeChanged += MainWindow_SizeChanged;
+            this.Closed += MainWindow_Closed;
+        }
+
+        private void MainWindow_Closed(object sender, WindowEventArgs args)
+        {
+            SaveState();
         }
         private void CustomizeWindow()
         {
@@ -251,8 +259,6 @@ namespace Kith
 
         private void InitializeCollections()
         {
-            Collections.Clear();
-
             BitmapImage housecover = new BitmapImage(new Uri("ms-appx:///Assets/house.png"));
             BitmapImage heartcover = new BitmapImage(new Uri("ms-appx:///Assets/heart.png"));
             double duration = 0.0;
@@ -533,6 +539,8 @@ namespace Kith
                         string newFileName = $"cover_{Guid.NewGuid()}{extension}";
 
                         StorageFile copiedFile = await file.CopyAsync(localFolder, newFileName, NameCollisionOption.ReplaceExisting);
+
+                        target.collection_cover_filename = newFileName;
 
                         DispatcherQueue.TryEnqueue(() =>
                         {
@@ -910,6 +918,107 @@ namespace Kith
             {
                 ViewModel.SongQueue.Remove(songToRemove);
             }
+        }
+
+        private void SaveState()
+        {
+            try
+            {
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string dir = Path.Combine(localAppData, "Kith");
+                Directory.CreateDirectory(dir);
+                string path = Path.Combine(dir, "save.txt");
+
+                using (StreamWriter writetext = new StreamWriter(path))
+                {
+                    if(ViewModel.PlayingSong != null){
+                        writetext.WriteLine($"{ViewModel.PlayingSong.FileName}");
+                    }
+                    else
+                    {
+                        writetext.WriteLine("null");
+                    }
+                        writetext.WriteLine($"{mediaPlayerElement.MediaPlayer.Position}");
+                    writetext.WriteLine($"{Volume}");
+
+                    foreach(Song likedSong in LikedSongsCollection.collection_songs)
+                    {
+                        writetext.Write($"{likedSong.FileName};");
+                    }
+                    writetext.Write("\n");
+
+                    foreach (Song queueSong in ViewModel.SongQueue.queue)
+                    {
+                        writetext.Write($"{queueSong.FileName};");
+                    }
+                    writetext.Write("\n");
+
+                    foreach (Collection col in CollectionViewModel.AllCollections)
+                    {
+
+                        writetext.Write($"{col.collection_name};");
+                        writetext.Write($"{col.collection_description};");
+                        writetext.Write($"{col.collection_cover_filename};");
+                        foreach (Song colsong in col.collection_songs)
+                        {
+                            writetext.Write($"{colsong.FileName};");
+                        }
+                    }
+                    writetext.Write("\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to save state: {ex.Message}");
+            }
+            
+        }
+
+        private async void LoadState()
+        {
+            try
+            {
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string dir = Path.Combine(localAppData, "Kith");
+                string path = Path.Combine(dir, "save.txt");
+                //System.Console.WriteLine($"{path}");
+
+                Song resume = null;
+
+                using (StreamReader readtext = new StreamReader(path))
+                {
+                    string playing_filename = readtext.ReadLine();
+                    foreach (Song s in Songs)
+                    {
+                        if (s.FileName == playing_filename)
+                        {
+                            resume = s;
+                        }
+                    }
+
+                    string stringPos = readtext.ReadLine();
+                    TimeSpan.TryParse(stringPos, out TimeSpan pos);
+                    System.Console.WriteLine($"{pos}");
+
+                    string stringVol = readtext.ReadLine();
+                    double.TryParse(stringVol, out double vol);
+                    System.Console.WriteLine($"{vol}");
+                    Volume = vol;
+                    mediaPlayerElement.MediaPlayer.Volume = Volume;
+                    volumeSlider.Value = vol*100;
+
+                    if (resume != null){
+                        lastPlayedPosition = pos;
+                        await LoadAndPlaySong(resume, lastPlayedPosition);
+                        mediaPlayerElement.MediaPlayer.Pause();
+                    }
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load state: {ex.Message}");
+            } 
         }
     }
 }

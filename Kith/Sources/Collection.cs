@@ -10,6 +10,7 @@ namespace Kith.Sources
     public class Collection : INotifyPropertyChanged
     {
         private BitmapImage _collection_cover;
+        public string collection_cover_filename { get; set; } = "";
         private string _collection_name;
         private string _collection_description;
         private double _collection_duration;
