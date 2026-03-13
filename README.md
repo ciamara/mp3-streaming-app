@@ -9,6 +9,7 @@
 - Dynamic Playlists (Collections): Organize your music into collections, including a default "All Songs" view and a "Liked Songs" section.
 - Modern Audio Controls with a true random shuffle (not like spotify) : Complete transport controls including seek, volume, mute, and shuffle/repeat functionality.
 - Fully functional queue
+- saving application state between sessions
 
 ## Structure
 - Converters: Custom XAML value converters (DurationConverter, IPictureImageConverter, StringJoinConverter) to handle data formatting.
@@ -24,7 +25,6 @@
 
 ## Roadmap
 - quality of life changes (search bars, sorting etc)
-- saving state to a file
 - Full screen mode with dynamic animations based on the album cover art
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
 
