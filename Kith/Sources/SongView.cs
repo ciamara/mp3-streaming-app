@@ -95,9 +95,12 @@ namespace Kith.Sources
         {
             CurrentCollectionSongs.Clear();
 
-            foreach (var song in currentSongs)
+            if (currentSongs != null )
             {
-                CurrentCollectionSongs.Add(song);
+                foreach (var song in currentSongs)
+                {
+                    CurrentCollectionSongs.Add(song);
+                }
             }
         }
 

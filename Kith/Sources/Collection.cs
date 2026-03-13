@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml.Media.Imaging;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -95,6 +96,18 @@ namespace Kith.Sources
             this.editable = editable;
         }
 
+        public Collection(string name, string description, string coverFile, bool editable)
+        {
+            this.collection_name = name;
+            this.collection_description = description;
+            this.collection_cover_filename = coverFile;
+            this.editable = editable;
+            this.collection_size = 0;
+            this.collection_duration = 0.0;
+            this.collection_cover = new BitmapImage(new Uri(this.collection_cover_filename));
+            this.collection_songs = new List<Song>();
+        }
+
         public void Add(Song song)
         {
             collection_songs.Add(song);
@@ -174,11 +187,14 @@ namespace Kith.Sources
 
         private void RecalculateStats()
         {
-            collection_duration = Math.Ceiling(collection_songs.Sum(s => s.Duration.TotalMinutes));
-            collection_size = (uint)collection_songs.Count;
+            if (collection_songs.Count > 0)
+            {
+                collection_duration = Math.Ceiling(collection_songs.Sum(s => s.Duration.TotalMinutes));
+                collection_size = (uint)collection_songs.Count;
 
-            OnPropertyChanged(nameof(collection_duration));
-            OnPropertyChanged(nameof(collection_size));
+                OnPropertyChanged(nameof(collection_duration));
+                OnPropertyChanged(nameof(collection_size));
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -13,6 +13,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using TagLib;
+using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Media.Playback;
@@ -20,12 +21,17 @@ using Windows.Services.Maps;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using static System.Net.Mime.MediaTypeNames;
+using Window = Microsoft.UI.Xaml.Window;
 
 
 namespace Kith
 {
     public sealed partial class MainWindow : Window
     {
+
+        [System.Runtime.InteropServices.DllImport("User32.dll")]
+        private static extern uint GetDpiForWindow(IntPtr hwnd);
+
         private object _windowSubclassingReference;
         private List<Song> Songs { get; set; } = new List<Song>();
 
@@ -85,6 +91,7 @@ namespace Kith
 
             AppWindow.SetIcon("Assets/Tiles/GalleryIcon.ico");
             AppWindow.TitleBar.PreferredTheme = TitleBarTheme.UseDefaultAppMode;
+
             OverlappedPresenter presenter = OverlappedPresenter.Create();
 
             presenter.IsAlwaysOnTop = false;
@@ -94,6 +101,14 @@ namespace Kith
             presenter.SetBorderAndTitleBar(false, false);
 
             AppWindow.SetPresenter(presenter);
+
+            uint dpi = GetDpiForWindow(hwnd);
+            double scalingFactor = dpi / 96.0;
+
+            int physicalWidth = (int)(1230 * scalingFactor);
+            int physicalHeight = (int)(660 * scalingFactor);
+
+            AppWindow.ResizeClient(new Windows.Graphics.SizeInt32(physicalWidth, physicalHeight));
 
             SizeChanged += MainWindow_SizeChanged;
             this.Closed += MainWindow_Closed;
@@ -337,7 +352,7 @@ namespace Kith
 
                 mediaPlayerElement.MediaPlayer.Source = mediaSource;
 
-                mediaPlayerElement.MediaPlayer.Position = lastPlayedPosition;
+                mediaPlayerElement.MediaPlayer.Position = playFrom;
                 mediaPlayerElement.MediaPlayer.Play();
             }
             catch (Exception ex)
@@ -958,13 +973,20 @@ namespace Kith
 
                         writetext.Write($"{col.collection_name};");
                         writetext.Write($"{col.collection_description};");
-                        writetext.Write($"{col.collection_cover_filename};");
+
+                        string cover = col.collection_cover_filename;
+                        if (!string.IsNullOrEmpty(cover))
+                        {
+                            cover = cover.Replace("ms-appdata:///local/", "");
+                        }
+                        writetext.Write($"{cover};");
+
                         foreach (Song colsong in col.collection_songs)
                         {
                             writetext.Write($"{colsong.FileName};");
                         }
+                        writetext.Write("\n");
                     }
-                    writetext.Write("\n");
                 }
             }
             catch (Exception ex)
@@ -998,11 +1020,11 @@ namespace Kith
 
                     string stringPos = readtext.ReadLine();
                     TimeSpan.TryParse(stringPos, out TimeSpan pos);
-                    System.Console.WriteLine($"{pos}");
+                    //System.Console.WriteLine($"{pos}");
 
                     string stringVol = readtext.ReadLine();
                     double.TryParse(stringVol, out double vol);
-                    System.Console.WriteLine($"{vol}");
+                    //System.Console.WriteLine($"{vol}");
                     Volume = vol;
                     mediaPlayerElement.MediaPlayer.Volume = Volume;
                     volumeSlider.Value = vol*100;
@@ -1012,7 +1034,69 @@ namespace Kith
                         await LoadAndPlaySong(resume, lastPlayedPosition);
                         mediaPlayerElement.MediaPlayer.Pause();
                     }
-                    
+
+                    // liked songs collection
+                    string likedData = readtext.ReadLine();
+                    string[] likedParsed = likedData.Split(';');
+
+                    int size = likedParsed.Count();
+                    for (int i = 0; i <= (size - 2); i++)
+                    {
+                        Song s = Songs.Find(x => x.FileName == likedParsed[i]);
+                        s.liked = true;
+
+                        LikedSongsCollection.Add(s);
+
+                    }
+
+
+                    // queue
+                    string queueData = readtext.ReadLine();
+                    string[] queueParsed = queueData.Split(';');
+
+                    size = queueParsed.Count();
+                    for (int i = 0; i <= (size - 2); i++)
+                    {
+                        Song s = Songs.Find(x => x.FileName == queueParsed[i]);
+
+                        ViewModel.SongQueue.queue.Add(s);
+
+                    }
+
+                    // playlists
+                    string playlistData;
+                    string[] playlistParsed;
+
+                    playlistData = readtext.ReadLine();
+                    //System.Console.WriteLine($"{playlistData}");
+                    while (playlistData != null)
+                    {
+                        playlistParsed = playlistData.Split(';');
+
+                        string coverFileName = playlistParsed[2].Trim();
+                        string fullCoverPath = coverFileName;
+
+                        if (!string.IsNullOrEmpty(coverFileName) && !coverFileName.StartsWith("ms-appdata:///local/"))
+                        {
+                            fullCoverPath = "ms-appdata:///local/" + coverFileName;
+                        }
+
+                        Collection newCol = new Collection(playlistParsed[0], playlistParsed[1], fullCoverPath, true);
+
+                        CollectionViewModel.AllCollections.Add(newCol);
+
+                        size = playlistParsed.Count();
+                        for (int i = 3; i <= (size - 2); i++)
+                        {
+                            Song s = Songs.Find(x => x.FileName == playlistParsed[i]);
+
+                            newCol.Add(s);
+
+                        }
+                        playlistData = readtext.ReadLine();
+                    }
+
+
                 }
             }
             catch (Exception ex)
