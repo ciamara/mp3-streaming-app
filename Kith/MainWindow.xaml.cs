@@ -1,13 +1,14 @@
-﻿using Kith.Sources;
+﻿using AudioVisualiser;
+using Kith.Sources;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
-
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -22,10 +23,14 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using static System.Net.Mime.MediaTypeNames;
 using Window = Microsoft.UI.Xaml.Window;
+using Windows.UI;
 
 
 namespace Kith
 {
+    /// <summary>
+    /// Main Window of mp3 player.
+    /// </summary>
     public sealed partial class MainWindow : Window
     {
 
@@ -62,6 +67,9 @@ namespace Kith
         private Song previousSong;
         private TimeSpan lastPlayedPosition;
 
+        private const int BarCount = 32;
+        private float[] lastFrameBars = new float[BarCount];
+
         public MainWindow()
         {
             this.InitializeComponent();
@@ -71,6 +79,7 @@ namespace Kith
             CollectionViewModel = new CollectionsView();
             ViewModel = new SongsView();
             LayoutRoot.DataContext = ViewModel;
+            AudioVisualizerMode.DataContext = ViewModel;
             leftSection.DataContext = CollectionViewModel;
             collectionInfo.DataContext = CollectionViewModel;
             FlyoutCollectionsList.DataContext = CollectionViewModel;
@@ -143,8 +152,20 @@ namespace Kith
         }
         private void MainWindow_SizeChanged(object sender, WindowSizeChangedEventArgs e)
         {
-            OverlappedPresenter presenter = (OverlappedPresenter)AppWindow.Presenter;
-            MaximizeRestoreBtn.Icon = presenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
+            //OverlappedPresenter presenter = (OverlappedPresenter)AppWindow.Presenter;
+            //MaximizeRestoreBtn.Icon = presenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
+
+            if (AppWindow.Presenter is OverlappedPresenter overlappedPresenter)
+            {
+                if (overlappedPresenter.State == OverlappedPresenterState.Maximized)
+                {
+                    MaximizeRestoreBtn.Icon = overlappedPresenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
+                }
+                else
+                {
+                    MaximizeRestoreBtn.Icon = overlappedPresenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
+                }
+            }
         }
         private void MinimizeBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -342,6 +363,8 @@ namespace Kith
         {
             if (song == null) return;
 
+            _ = UpdateVisualizerThemeAsync(song);
+
             try
             {
                 ViewModel.PlayingSong = song;
@@ -447,17 +470,30 @@ namespace Kith
             if (mediaPlayerElement != null && mediaPlayerElement.MediaPlayer != null)
             {
                 Volume = e.NewValue / 100.0;
-                if (Volume != 0)
+                mediaPlayerElement.MediaPlayer.Volume = Volume;
+
+                string targetGlyph;
+
+                if (Volume > 0)
                 {
                     Muted = false;
-                    VolumeIcon.Glyph = "\uE767";
+                    targetGlyph = "\uE767";
                 }
-                if (Volume == 0)
+                else
                 {
                     Muted = true;
-                    VolumeIcon.Glyph = "\uE74F";
+                    targetGlyph = "\uE74F";
                 }
-                mediaPlayerElement.MediaPlayer.Volume = Volume;
+
+                if (VolumeIcon != null)
+                {
+                    VolumeIcon.Glyph = targetGlyph;
+                }
+
+                if (visualizerVolumeIcon != null)
+                {
+                    visualizerVolumeIcon.Glyph = targetGlyph;
+                }
             }
         }
 
@@ -465,18 +501,32 @@ namespace Kith
         {
             if (mediaPlayerElement != null && mediaPlayerElement.MediaPlayer != null)
             {
+                string targetGlyph;
+
                 if (Muted)
                 {
+                    // unmute
                     Muted = false;
                     mediaPlayerElement.MediaPlayer.Volume = Volume;
-                    VolumeIcon.Glyph = "\uE767";
+                    targetGlyph = "\uE767"; // The 'Volume' icon
                 }
                 else
                 {
+                    // mute
                     Muted = true;
                     Volume = mediaPlayerElement.MediaPlayer.Volume;
                     mediaPlayerElement.MediaPlayer.Volume = 0;
-                    VolumeIcon.Glyph = "\uE74F";
+                    targetGlyph = "\uE74F";
+                }
+
+                if (VolumeIcon != null)
+                {
+                    VolumeIcon.Glyph = targetGlyph;
+                }
+
+                if (visualizerVolumeIcon != null)
+                {
+                    visualizerVolumeIcon.Glyph = targetGlyph;
                 }
 
             }
@@ -496,9 +546,21 @@ namespace Kith
             }
         }
 
-        private void FullScreenButton_Click(object sender, RoutedEventArgs e)
+        private async void FullScreenButton_Click(object sender, RoutedEventArgs e)
         {
+            LayoutRoot.Visibility = Visibility.Collapsed;
+            AudioVisualizerMode.Visibility = Visibility.Visible;
 
+            // link media player
+            if (mediaPlayerElement.MediaPlayer != null)
+            {
+                visualizerMediaPlayerElement.SetMediaPlayer(mediaPlayerElement.MediaPlayer);
+            }
+
+            if (AppWindow != null)
+            {
+                AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+            }
         }
         private void AllSongsButton_Click(object sender, RoutedEventArgs e)
         {
@@ -640,6 +702,7 @@ namespace Kith
         private void MediaPlayer_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
         {
             previousSong = ViewModel.PlayingSong;
+
             if (repeatEnabled)
             {
                 DispatcherQueue.TryEnqueue(() =>
@@ -1103,6 +1166,121 @@ namespace Kith
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to load state: {ex.Message}");
             } 
+        }
+
+        /// <summary>
+        /// Handles FftCalculated from AudioHelper.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="magnitudes">magintudes calculated in AudioHelper</param>
+        private void OnFftCalculated(object sender, float[] magnitudes)
+        {
+            int barCount = 32;
+            float[] displayBars = new float[barCount];
+
+            // grouping fft bins into bars
+            int binsPerBar = magnitudes.Length / barCount;
+
+            for (int i = 0; i < barCount; i++)
+            {
+                float average = 0;
+                for (int j = 0; j < binsPerBar; j++)
+                {
+                    average += magnitudes[(i * binsPerBar) + j];
+                }
+                average /= binsPerBar;
+
+                // log scaling -> low frequencies more visible
+                // A scaling -> bars taller
+                float intensity = (float)Math.Log10(1 + average) * 100;
+
+                // smoothing
+                displayBars[i] = LinInterpolation(lastFrameBars[i], intensity, 0.2f);
+            }
+        }
+
+        private float LinInterpolation(float start, float end, float amount)
+        {
+            return start + (end - start) * amount;
+        }
+
+        private void ExitVisualizer_Tapped(object sender, RoutedEventArgs e)
+        {
+            AudioVisualizerMode.Visibility = Visibility.Collapsed;
+            LayoutRoot.Visibility = Visibility.Visible;
+
+            AppWindow.SetPresenter(AppWindowPresenterKind.Default);
+        }
+
+        private async Task UpdateVisualizerThemeAsync(Song song)
+        {
+            if (song?.Pictures == null || song.Pictures.Length == 0) return;
+
+            try
+            {
+                using (SoftwareBitmap bitmap = await VisualHelper.GetBitmapFromIPicture(song.Pictures[0]))
+                {
+                    if (bitmap == null) return;
+
+                    string hexColor = await VisualHelper.ExtractFeatureColor(bitmap);
+                    var rawColor = VisualHelper.GetColorFromHex(hexColor);
+                    SolidColorBrush brush = new SolidColorBrush(rawColor);
+
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        // volume slider
+                        visualizerVolumeSlider.Foreground = brush;
+                        visualizerVolumeSlider.BorderBrush = brush;
+
+                        var vrs = visualizerVolumeSlider.Resources;
+                        vrs["SliderThumbBackground"] = brush;
+                        vrs["SliderThumbBackgroundPointerOver"] = brush;
+                        vrs["SliderThumbBackgroundPressed"] = brush;
+                        vrs["SliderTrackValueFill"] = brush;
+                        vrs["SliderTrackValueFillPointerOver"] = brush;
+                        vrs["SliderTrackValueFillPressed"] = brush;
+                        vrs["SliderTickBarFill"] = brush;
+
+                        visualizerVolumeSlider.FocusVisualPrimaryBrush = brush;
+                        visualizerVolumeSlider.FocusVisualSecondaryBrush = new SolidColorBrush(Microsoft.UI.Colors.Black);
+
+                        // transport controls slider
+                        var tc = visualizerTransportControls;
+                        tc.Resources["SliderTrackValueFill"] = brush;
+                        tc.Resources["SliderTrackValueFillPointerOver"] = brush;
+                        tc.Resources["SliderThumbBackground"] = brush;
+                        tc.Resources["SliderThumbBackgroundPointerOver"] = brush;
+
+                        // background gradient
+                        LinearGradientBrush dynamicGradient = new LinearGradientBrush();
+                        dynamicGradient.StartPoint = new Windows.Foundation.Point(0, 0);
+                        dynamicGradient.EndPoint = new Windows.Foundation.Point(0, 1);
+
+
+                        Color topColor = Color.FromArgb(180, rawColor.R, rawColor.G, rawColor.B);
+                        dynamicGradient.GradientStops.Add(new GradientStop() { Color = topColor, Offset = 0.1 });
+
+                        dynamicGradient.GradientStops.Add(new GradientStop() { Color = VisualHelper.GetColorFromHex("#1B1B1B"), Offset = 0.8 });
+
+                        VisualizerGradient.Fill = dynamicGradient;
+
+                        // refresh
+                        RefreshElementTheme(visualizerVolumeSlider);
+                        RefreshElementTheme(tc);
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Theme Update Error: {ex.Message}");
+            }
+        }
+
+        private void RefreshElementTheme(FrameworkElement element)
+        {
+            var current = element.RequestedTheme;
+            element.RequestedTheme = current == ElementTheme.Light ? ElementTheme.Dark : ElementTheme.Light;
+            element.RequestedTheme = ElementTheme.Default;
         }
     }
 }

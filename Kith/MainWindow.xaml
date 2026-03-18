@@ -18,916 +18,1043 @@
 
     </Window.SystemBackdrop>
 
-    <Grid x:Name="LayoutRoot" Background="{StaticResource WindowBackgroundBrush}">
+    <Grid>
+        <Grid x:Name="AudioVisualizerMode" 
+              Background="{StaticResource WindowBackgroundBrush}" 
+              Visibility="Collapsed">
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="25*"/>
-            <ColumnDefinition Width="50*"/>
-            <ColumnDefinition Width="25*"/>
-        </Grid.ColumnDefinitions>
-
-        <Grid.RowDefinitions>
-            <RowDefinition Height="60"/>
-            <RowDefinition/>
-            <RowDefinition Height="90"/>
-        </Grid.RowDefinitions>
-
-        <Grid.Resources>
-            <converters:CeilingConverter x:Key="DurationCeilingConverter"/>
-            <converters:StringJoinConverter x:Key="StringJoinConverter"/>
-            <converters:IPictureImageConverter x:Key="IPictureImageConverter"/>
-            <converters:BooleanToGlyphConverter x:Key="BoolToGlyph" />
-            <converters:NullToVisibilityConverter x:Key="NullToVisible" />
-            <Style x:Key="FlyoutStyle" TargetType="MenuFlyoutPresenter">
-                <Setter Property="Background" Value="#732e18"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="CornerRadius" Value="12"/>
-                <Setter Property="Padding" Value="0"/>
-            </Style>
-            <DataTemplate x:Key="ListFlyoutCollectionTemplate" x:DataType="sources:Collection">
-                <StackPanel Orientation="Horizontal" Padding="5">
-                    <Image Source="{Binding collection_cover}" Stretch="UniformToFill" Width="30" Height="30" Margin="-10,0,10,0"/>
-                    <TextBlock Text="{Binding collection_name}" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="13" Foreground="White"/>
-                </StackPanel>
-            </DataTemplate>
-            <DataTemplate x:Key="SongListViewTemplate">
-                <Grid Padding="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="20"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="1.7*" />
-                        <ColumnDefinition Width="1.7*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="60"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Grid.ContextFlyout>
-                        <MenuFlyout x:Name="SongFlyoutContext" MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}" Opening="SongFlyoutContext_Opening">
-                            <MenuFlyoutItem Text="add to queue" Click="AddToQueue" Tag="{Binding}"/>
-                            <MenuFlyoutItem Text="delete from collection" Click="DeleteFromCollection" Tag="{Binding}"/>
-                        </MenuFlyout>
-
-                    </Grid.ContextFlyout>
-
-                    <!--<TextBlock Grid.Column="0" 
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Left"
-                               FontSize="12"
-                               Margin="0,0,0,0"
-                               Text="{Binding Index, Converter={StaticResource IndexConverter}}" 
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>-->
-
-                    <TextBlock x:Name="Index" 
-                               Grid.Column="0" 
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Left"
-                               FontSize="12"
-                               Margin="0,0,0,0"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-
-                    <Image Grid.Column="1"
-                           Source="{Binding Pictures, Converter={StaticResource IPictureImageConverter}}"
-                           Width="30" Height="30"
-                           HorizontalAlignment="Left"
-                           VerticalAlignment="Center"
-                           Margin="0,0,0,0"/>
-
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Text="{Binding Title}" 
-                                   Style="{StaticResource SubtitleTextBlockStyle}" 
-                                   FontSize="12" 
-                                   Margin="10,0,0,0"
-                                   VerticalAlignment="Center"
-                                   FontWeight="SemiBold"
-                                   TextTrimming="CharacterEllipsis"/>
-
-                        <TextBlock Text="{Binding Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}" 
-                                   Style="{StaticResource BodyTextBlockStyle}" 
-                                   VerticalAlignment="Center"
-                                   FontSize="12"
-                                   Margin="10,0,0,0"
-                                   Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
-
-                    <TextBlock Grid.Column="3"
-                       VerticalAlignment="Center"
-                       FontSize="12" 
-                       Text="{Binding Album}"
-                       TextTrimming="CharacterEllipsis"
-                       Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-
-                    <TextBlock Grid.Column="4"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Left"
-                       Margin="0,0,10,0"
-                       Text="{Binding Duration, Converter={StaticResource DurationCeilingConverter}}"
-                       Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-
-                    <StackPanel Orientation="Horizontal" Grid.Column="5" Spacing="0" Padding="0" HorizontalAlignment="Right">
-                        <Button Click="ListLikeButton_Click" 
-                                ClickMode="Release"
-                                Width="25" Height="25"
-                                Padding="0"
-                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                                BorderBrush="Transparent"
-                                Background="Transparent"
-                                ToolTipService.ToolTip="ListLike">
-                            <FontIcon x:Name="LikeIcon" 
-                                      Glyph="{Binding liked, Converter={StaticResource BoolToGlyph}}" 
-                                      FontSize="13"/>
-                        </Button>
-
-                        <Button HorizontalAlignment="Right"
-                                ClickMode="Release"
-                                Width="25" Height="25"
-                                Padding="0"
-                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                                BorderBrush="Transparent"
-                                Background="Transparent"
-                                ToolTipService.ToolTip="add to collection">
-                            <FontIcon x:Name="AddToCollectionIcon" 
-                                      Glyph="&#xECC8;" 
-                                      FontSize="13"/>
-                            <Button.Flyout>
-                                <Flyout x:Name="ListAddToCollectionFlyout" FlyoutPresenterStyle="{StaticResource FlyoutStyle}">
-
-                                    <ListView x:Name="ListFlyoutCollectionsList"
-                                              Loaded="ListFlyoutCollectionsList_Loaded"
-                                              ItemTemplate="{StaticResource ListFlyoutCollectionTemplate}"
-                                              SelectionMode="Single"
-                                              SelectionChanged="ListFlyoutCollectionsList_SelectionChanged"
-                                              Width="200"
-                                              MaxHeight="250"
-                                              ShowsScrollingPlaceholders="True"
-                                              BorderThickness="0">
-                                    </ListView>
-
-                                </Flyout>
-                            </Button.Flyout>
-                        </Button>
-                    </StackPanel>
-
-                    
-
-                </Grid>
-            </DataTemplate>
-  
-            <Style TargetType="AppBarButton">
-                <Setter Property="Width" Value="50"/>
-                <Setter Property="Height" Value="50"/>
-            </Style>
-        </Grid.Resources>
-
-        <Grid x:Name="TitleBarContainer" Grid.Row="0" Grid.ColumnSpan="3">
-
-            <Grid.ColumnDefinitions>
+            <!--<Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="40"/>
             </Grid.ColumnDefinitions>
 
-            <!--<StackPanel Grid.Column="0"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Top"
-                    Spacing="0">
-                <AppBarButton x:Name="GoBackBtn"
-                          Click="GoBackBtn_Click"
-                          Margin="0,0,0,0">
-                    <AppBarButton.Icon>
-                        <SymbolIcon Symbol="Back"/>
-                    </AppBarButton.Icon>
-                </AppBarButton>
-
-                <AppBarButton x:Name="GoForwardBtn"
-                          Click="GoForwardBtn_Click"
-                          Margin="0,0,0,0">
-                    <AppBarButton.Icon>
-                        <SymbolIcon Symbol="Forward"/>
-                    </AppBarButton.Icon>
-                </AppBarButton>
-            </StackPanel>-->
-
-            <!--<AutoSuggestBox x:Name="MainSearch"
-                        PlaceholderText="Search..."
-                        TextChanged="MainSearch_TextChanged"
-                        QueryIcon="Find"
-                        QuerySubmitted="MainSearch_QuerySubmitted"
-                        SuggestionChosen="MainSearch_SuggestionChosen"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Width="300"
-                        Height="35"
-                        Margin="0,0,0,0" 
-                        CornerRadius="22"
-                        Background="{ThemeResource ButtonBackgroundBrush}"
-                        Foreground="{ThemeResource ButtonForegroundBrush}"
-                        BorderBrush="{ThemeResource ButtonBackgroundBrush}"
-                        Grid.Column="1">
-                <AutoSuggestBox.Resources>
-                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
-                    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
-                    <SolidColorBrush x:Key="TextControlBackgroundGotFocus" Color="{StaticResource FoxyDark}"/>
-                </AutoSuggestBox.Resources>
-            </AutoSuggestBox>-->
-
-            <StackPanel Grid.Column="2"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Top"
-                    Spacing="0">
-
-                <AppBarButton x:Name="MinimizeBtn"
-                          Click="MinimizeBtn_Click">
-                    <AppBarButton.Icon>
-                        <SymbolIcon Symbol="Remove"/>
-                    </AppBarButton.Icon>
-                </AppBarButton>
-
-                <AppBarButton x:Name="MaximizeRestoreBtn"
-                          Click="MaximizeRestoreBtn_Click">
-                    <AppBarButton.Icon>
-                        <SymbolIcon Symbol="FullScreen"/>
-                    </AppBarButton.Icon>
-                </AppBarButton>
-
-                <AppBarButton x:Name="CloseBtn"
-                          Click="CloseBtn_Click">
-                    <AppBarButton.Icon>
-                        <SymbolIcon Symbol="Cancel"/>
-                    </AppBarButton.Icon>
-                    <AppBarButton.Resources>
-                        <SolidColorBrush x:Key="AppBarButtonBackgroundPointerOver" Color="{StaticResource FoxyDark}"/>
-                    </AppBarButton.Resources>
-                </AppBarButton>
-            </StackPanel>
-
-        </Grid>
-
-        <!--GRADIENT GRID -->
-        <Rectangle x:Name="LeftSection"
-                       MaxHeight="724" 
-                       MaxWidth="373.6"
-                       Margin="5,0,5,0"
-                       Stroke="Transparent"              
-                       Grid.Column="0"
-                       Grid.Row="1"
-                       RadiusX="50"
-                       RadiusY="50"
-                       Fill="{ThemeResource ColorDownGradientBrush}"/>
-
-        <Rectangle x:Name="RightSection"
-                       MaxHeight="724" 
-                       MaxWidth="373.6"
-                       Margin="5,0,5,0"
-                       Stroke="Transparent"  
-                       Grid.Column="2"
-                       Grid.Row="1"
-                       RadiusX="50"
-                       RadiusY="50"
-                       Fill="{ThemeResource ColorDownGradientBrush}"/>
-
-        <Rectangle x:Name="BottomSection" 
-                   Height="80" 
-                   MaxWidth="1530"
-                   Margin="5,5,5,5"
-                   Stroke="Transparent"  
-                   Grid.ColumnSpan="3"
-                   Grid.Row="2"
-                   RadiusX="30"
-                   RadiusY="30"
-                   Fill="{ThemeResource ColorUpGradientBrush}"/>
-
-        <Rectangle x:Name="MiddleSection"
-                       MaxHeight="724"
-                       MaxWidth="768.8"
-                       Margin="0,0,0,0"
-                       Stroke="Transparent" 
-                       Grid.Column="1"
-                       Grid.Row="1"
-                       RadiusX="50"
-                       RadiusY="50"
-                       Fill="{ThemeResource ColorDownGradientBrush}"/>
-
-        <Grid x:Name="collectionInfo" Grid.Column="1" Grid.Row="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="0.35*" />
-                <RowDefinition Height="1*" />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
-
-            <Grid Grid.Column="0"
-                  Grid.Row="0"
-                  Margin="25,0,0,0"
-                  Background="Transparent"
-                  Tapped="CollectionCoverImage_Tapped"
-                  SizeChanged="CollectionCoverGrid_SizeChanged"
-                  IsTapEnabled="True">
-
-                <Image x:Name="CollectionCoverImage"
-                       Source="{Binding SelectedCollection.collection_cover, Mode=OneWay}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       Stretch="UniformToFill"
-                       IsHitTestVisible="False"/>
-            </Grid>
-
-            <TextBlock Grid.Column="1"
-                       Grid.Row="0"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Left"
-                       FontSize="30"
-                       FontWeight="ExtraBold"
-                       FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                       Margin="10,0,0,0"
-                       Text="{Binding SelectedCollection.collection_name}"
-                       Tapped="CollectionName_Tapped"
-                       Foreground="White"/>
-            
-            <TextBlock Grid.Column="1"
-                       Grid.Row="0"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Left"
-                       Margin="10,53,0,0"
-                       FontSize="16"
-                       Text="{Binding SelectedCollection.collection_description}"
-                       Tapped="CollectionDescription_Tapped"
-                       Foreground="{StaticResource BrokenWhite}"/>
-            
-            <TextBlock Grid.Column="1"
-                       Grid.Row="0"
-                       VerticalAlignment="Bottom"
-                       HorizontalAlignment="Left"
-                       Margin="10,0,0,8"
-                       FontSize="11"
-                       Foreground="{StaticResource BrokenWhite}">
-                <Run Text="{Binding SelectedCollection.collection_size}"/>
-                <Run Text="songs,"/>
-            </TextBlock>
-
-            <TextBlock Grid.Column="1"
-                       Grid.Row="0"
-                       VerticalAlignment="Bottom"
-                       HorizontalAlignment="Left"
-                       Margin="65,0,0,8"
-                       FontSize="11"
-                       Foreground="{StaticResource BrokenWhite}">
-                <Run Text="{Binding SelectedCollection.collection_duration}"/>
-                <Run Text="min"/>
-            </TextBlock>
-        </Grid>
-
-        <Grid x:Name="midSection" Grid.Column="1" Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="3*" />
-                <RowDefinition Height="5*" />
-            </Grid.RowDefinitions>
-
-            <Grid Grid.Row="1" 
-                  VerticalAlignment="Top" 
-                  HorizontalAlignment="Stretch"
-                  Margin="25, 0, 45, 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40" />
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="#" FontWeight="Light" FontSize="12" Margin="0, 0, 16, 0" HorizontalAlignment="Right"
-                   Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
-                <TextBlock Grid.Column="1" Text="title" FontWeight="Light" FontSize="12" Margin="36, 0, 0, 0" HorizontalAlignment="Left"
-                   Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
-                <TextBlock Grid.Column="2" Text="album" FontWeight="Light" FontSize="12" Margin="14, 0, 0, 0" HorizontalAlignment="Left"
-                   Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
-                <TextBlock Grid.Column="3" Text="duration" FontWeight="Light" FontSize="12" HorizontalAlignment="Left" Margin="0, 0, 67, 0"
-                   Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
-            </Grid>
-
-            <Rectangle Grid.Row="1"
-                       Height="1" 
-                       VerticalAlignment="Top"
-                       HorizontalAlignment="Stretch"
-                       Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                       Margin="25, 22, 45, 0"/>
-
-            <!--ALL SONGS VIEW -->
-            <ListView x:Name="SongsView"
-                      ContainerContentChanging="SongsView_ContainerContentChanging"
-                          ItemsSource="{Binding CurrentCollectionSongs}"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          ItemTemplate="{StaticResource SongListViewTemplate}"
-                          SelectionMode="Single"
-                          SelectedItem="{Binding SelectedSong, Mode=TwoWay}"
-                          SelectionChanged="SongsView_SelectionChanged"
-                          ShowsScrollingPlaceholders="True"
-                          Margin="25, 25, 45, 25"
-                          BorderThickness="0"
-                          BorderBrush="{StaticResource WindowBackgroundBrush}"
-                          Grid.Column="1"
-                          Grid.Row="1">
-            </ListView>
-        </Grid>
-        <Grid x:Name="leftBottomSection" Grid.Column="0" Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.7*"/>
-                <ColumnDefinition Width="1.3*"/>
-                <ColumnDefinition Width="1.1*"/>
-            </Grid.ColumnDefinitions>
-            
-            <Image Grid.Column="0"
-                   Source="{Binding PlayingSong.Pictures, Converter={StaticResource IPictureImageConverter}}"
-                   HorizontalAlignment="Stretch"
-                   VerticalAlignment="Stretch"
-                   Margin="25,0,0,0"/>
-
-            <Grid x:Name="leftBottomSectionTitleArtist" Grid.Column="1" Margin="0,15,0,15">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="1*"/>
-                    <RowDefinition Height="1*"/>
-                </Grid.RowDefinitions>
-
-                <TextBlock Grid.Row="0"
-                           VerticalAlignment="Bottom"
-                           HorizontalAlignment="Left"
-                           Margin="10,0,0,0"
-                           Text="{Binding PlayingSong.Title}"
-                           FontSize="15"
-                           FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                           FontWeight="SemiBold"
-                           Foreground="White"/>
-
-                <TextBlock Grid.Row="1"
-                           VerticalAlignment="Top"
-                           HorizontalAlignment="Left"
-                           Margin="10,0,0,0"
-                           Text="{Binding PlayingSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}"
-                           FontSize="12"
-                           FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                           Foreground="{StaticResource BrokenWhite}"/>
-            </Grid>
-
-            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0" Spacing="5">
-                
-                <StackPanel.Resources>
-                    
-                    <DataTemplate x:Key="FlyoutCollectionTemplate" x:DataType="sources:Collection">
-                        <StackPanel Orientation="Horizontal" Padding="5">
-                            <Image Source="{Binding collection_cover}" Stretch="UniformToFill" Width="30" Height="30" Margin="-10,0,10,0"/>
-                            <TextBlock Text="{Binding collection_name}" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="13" Foreground="White"/>
-                        </StackPanel>
-                    </DataTemplate>
-
-                    <Style x:Key="FlyoutStyle" TargetType="FlyoutPresenter">
-                        <Setter Property="Background" Value="#402218"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="CornerRadius" Value="12"/>
-                        <Setter Property="Padding" Value="0"/>
-                    </Style>
-                    
-                </StackPanel.Resources>
-
-                <Button Click="LikeButton_Click" 
-                        ClickMode="Release"
-                        Width="35" Height="35"
-                        Padding="0"
-                        Foreground="{StaticResource BrokenWhite}"
-                        BorderBrush="Transparent"
-                        Background="Transparent"
-                        ToolTipService.ToolTip="Like">
-                    <FontIcon x:Name="LikeIcon" 
-                              Glyph="{Binding PlayingSong.liked, Converter={StaticResource BoolToGlyph}}" 
-                              FontSize="15"/>
-                </Button>
-
-                <Button ClickMode="Release"
-                        Width="35" Height="35"
-                        Margin="0,0,0,0"
-                        Padding="0"
-                        Foreground="{StaticResource BrokenWhite}"
-                        Visibility="{Binding PlayingSong, Converter={StaticResource NullToVisible}}"
-                        BorderBrush="Transparent"
-                        Background="Transparent"
-                        ToolTipService.ToolTip="Add to collection">
-                    <FontIcon x:Name="AddToCollectionIcon" Glyph="&#xECC8;" FontSize="15"/>
-                    
-                    <Button.Flyout>
-                        <Flyout x:Name="AddToCollectionFlyout" FlyoutPresenterStyle="{StaticResource FlyoutStyle}">
-
-                            <ListView x:Name="FlyoutCollectionsList"
-                                      ItemsSource="{Binding AllCollections}"
-                                      ItemTemplate="{StaticResource FlyoutCollectionTemplate}"
-                                      SelectionMode="Single"
-                                      SelectionChanged="FlyoutCollectionsList_SelectionChanged"
-                                      Width="220"
-                                      MaxHeight="300"
-                                      ShowsScrollingPlaceholders="True"
-                                      BorderThickness="0">
-                            </ListView>
-
-                        </Flyout>
-                    </Button.Flyout>
-                </Button>
-
-            </StackPanel>
-
-        </Grid>
-        
-        <Grid x:Name="leftSection" Grid.Column="0" Grid.Row="1">
+                <RowDefinition Height="100"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="2*"/>
+                <RowDefinition Height="4*"/>
+                <RowDefinition Height="40"/>
+            </Grid.RowDefinitions>-->
 
             <Grid.Resources>
-                <Style x:Key="FlyoutStyle" TargetType="MenuFlyoutPresenter">
-                    <Setter Property="Background" Value="#732e18"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="CornerRadius" Value="12"/>
-                    <Setter Property="Padding" Value="0"/>
-                </Style>
-                <DataTemplate x:Key="CollectionListViewTemplate" x:DataType="sources:Collection">
-                    <StackPanel Orientation="Horizontal" Padding="5">
-
-                        <StackPanel.ContextFlyout>
-                            <MenuFlyout MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}">
-                                <MenuFlyoutItem Text="delete" 
-                                                Click="DeleteCollection" 
-                                                Tag="{Binding}"/>
-                            </MenuFlyout>
-                        </StackPanel.ContextFlyout>
-                        
-                        <Image Source="{Binding collection_cover}" 
-                               Width="30" 
-                               Height="30" 
-                               Margin="-5,0,10,0"
-                               Stretch="UniformToFill"/>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="{Binding collection_name}" FontWeight="Light"/>
-                            <TextBlock Text="{Binding collection_description}" FontSize="11" Foreground="Gray" FontWeight="Light"/>
-                        </StackPanel>
-                    </StackPanel>
-                </DataTemplate>
+                <converters:IPictureImageConverter x:Key="IPictureImageConverter"/>
+                <converters:StringJoinConverter x:Key="StringJoinConverter"/>
             </Grid.Resources>
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="1.5*" />
-                <RowDefinition Height="1*" />
-                <RowDefinition Height="0.75*" />
-                <RowDefinition Height="0.75*" />
-                <RowDefinition Height="7*" />
-            </Grid.RowDefinitions>
+            <Canvas x:Name="VisualizerDrawingCanvas" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
 
-            <Button x:Name="NewCollectionButton"
-                    Grid.Row="0"
-                    Click="NewCollectionButton_Click" 
-                    ClickMode="Release"
-                    Margin="10,0,0,0"
-                    Width="40"
-                    Height="40"
-                    Padding="0"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Stretch"
-                    Foreground="{StaticResource BrokenWhite}"
-                    BorderBrush="Transparent"
-                    Background="Transparent">
-                <FontIcon x:Name="NewCollectionIcon" 
-                          Glyph="&#xECC8;" 
-                          FontSize="17" 
-                          VerticalAlignment="Center"/>
-            </Button>
+            <Rectangle x:Name="VisualizerGradient"
+                   Height="864"
+                   Width="1536"
+                   Margin="0,0,0,0"
+                   VerticalAlignment="Bottom"
+                   Stroke="Transparent" 
+                   Fill="{ThemeResource ColorDownGradientBrush}"/>
 
-            <Button x:Name="AllSongsButton"
-                    Grid.Row="2"
-                    Click="AllSongsButton_Click" 
-                    ClickMode="Release"
-                    Margin="35,0,35,0"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Left"
-                    VerticalAlignment="Stretch"
-                    Foreground="{StaticResource BrokenWhite}"
-                    BorderBrush="Transparent"
-                    Background="Transparent">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <FontIcon x:Name="HouseIcon" 
-                              Glyph="&#xEA8A;" 
-                              FontSize="17" 
-                              VerticalAlignment="Center"/>
-                    <TextBlock VerticalAlignment="Center"
-                               FontSize="13"
-                               Margin="10,0,0,0"
-                               Text="All Songs"
-                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                </StackPanel>
-            </Button>
+            <Image HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Source="{Binding PlayingSong.Pictures, Converter={StaticResource IPictureImageConverter}}"
+                   Width="300"
+                   Height="300"
+                   Margin="0,0,0,140"
+                   IsHitTestVisible="True"/>
 
-            <Button x:Name="LikedSongsButton"
-                    Grid.Row="3"
-                    Click="LikedSongsButton_Click" 
-                    ClickMode="Release"
-                    Margin="35,0,35,0"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Left"
-                    VerticalAlignment="Stretch"
-                    Foreground="{StaticResource BrokenWhite}"
-                    BorderBrush="Transparent"
-                    Background="Transparent">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <FontIcon x:Name="HeartIcon" 
-                              Glyph="&#xEB52;" 
-                              FontSize="17" 
-                              VerticalAlignment="Center"/>
-                    <TextBlock VerticalAlignment="Center"
-                               Margin="10,0,0,0"
-                               FontSize="13"
-                               Text="Liked Songs"
-                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                </StackPanel>
-            </Button>
+            <TextBlock VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       Margin="0,250,0,0"
+                       Text="{Binding PlayingSong.Title}"
+                       FontSize="30"
+                       FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                       FontWeight="SemiBold"
+                       Foreground="White"/>
 
-            <Rectangle Grid.Row="4"
-                       Height="0.5" 
-                       VerticalAlignment="Top"
-                       HorizontalAlignment="Stretch"
-                       Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                       Margin="25, 4, 45, 0"/>
+            <TextBlock VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       Margin="0,340,0,0"
+                       Text="{Binding PlayingSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}"
+                       FontSize="20"
+                       FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                       FontWeight="SemiLight"
+                       Foreground="{StaticResource BrokenWhite}"/>
 
-            <!--ALL COLLECTIONS VIEW -->
-            <ListView x:Name="CollectionsView"
-              ItemsSource="{Binding AllCollections}"
-              HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch"
-              ItemTemplate="{StaticResource CollectionListViewTemplate}"
-              SelectionMode="Single"
-              SelectedItem="{Binding SelectedCollection, Mode=TwoWay}"
-              SelectionChanged="CollectionsView_SelectionChanged"
-              ShowsScrollingPlaceholders="True"
-              Margin="25, 5, 25, 25"
-              BorderThickness="0"
-              Grid.Row="4">
-            </ListView>
-
-        </Grid>
-        <Grid Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center">
-            <MediaPlayerElement x:Name="mediaPlayerElement"
+            <MediaPlayerElement x:Name="visualizerMediaPlayerElement"
+                                VerticalAlignment="Bottom"
+                                Margin="0,650,0,0"
+                                HorizontalAlignment="Center"
                                 AutoPlay="False" AreTransportControlsEnabled="True"
                                 Background="Transparent">
                 <MediaPlayerElement.TransportControls>
-                    <local:CustomMediaTransportControls PreviousTrackClicked="PreviousTrackClicked"
-                                                        NextTrackClicked="NextTrackClicked"
-                                                        RepeatClicked="RepeatClicked"
-                                                        ShuffleClicked="ShuffleClicked"
-                                                        IsNextTrackButtonVisible="True"
-                                                        IsPreviousTrackButtonVisible="True"
-                                                        IsSeekBarVisible="True"
-                                                        IsSeekEnabled="True"
-                                                        IsCompact="False"
-                                                        IsRepeatButtonVisible="True"
-                                                        IsRepeatEnabled="True"
-                                                        IsZoomButtonVisible="False"
-                                                        IsZoomEnabled="False"
-                                                        HorizontalAlignment="Stretch"
-                                                        Background="Transparent"
-                                                        Style="{StaticResource myTransportControlsStyle}" />
+                    <local:CustomMediaTransportControls x:Name="visualizerTransportControls"
+                                                PreviousTrackClicked="PreviousTrackClicked"
+                                                NextTrackClicked="NextTrackClicked"
+                                                RepeatClicked="RepeatClicked"
+                                                ShuffleClicked="ShuffleClicked"
+                                                IsNextTrackButtonVisible="True"
+                                                IsPreviousTrackButtonVisible="True"
+                                                IsSeekBarVisible="True"
+                                                IsSeekEnabled="True"
+                                                IsCompact="False"
+                                                IsRepeatButtonVisible="True"
+                                                IsRepeatEnabled="True"
+                                                IsZoomButtonVisible="False"
+                                                IsZoomEnabled="False"
+                                                HorizontalAlignment="Stretch"
+                                                Background="Transparent"
+                                                Style="{StaticResource myTransportControlsStyle}" />
 
                 </MediaPlayerElement.TransportControls>
             </MediaPlayerElement>
-        </Grid>
 
-        <Grid x:Name="volumeSection" Grid.Column="2" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 10, 0, 0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" 
+                        VerticalAlignment="Bottom" 
+                        HorizontalAlignment="Right" 
+                        Margin="0,0,40,40" 
+                        Spacing="10">
 
-            <StackPanel Grid.Column="0" 
-                        Orientation="Horizontal" 
-                        Spacing="3" 
-                        VerticalAlignment="Center" 
-                        Margin="0,0,10,0"
-                        >
-
-                <Button x:Name="QueueButton"
-                        Click="QueueButton_Click" 
-                        ClickMode="Release"
-                        Foreground="{StaticResource BrokenWhite}"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Style="{StaticResource volumebuttonsstyle}">
-                    <FontIcon x:Name="QueueIcon" Glyph="&#xE71D;" FontSize="17"/>
-                </Button>
-
-                <Button x:Name="MuteButton"
+                <Button x:Name="visualizerMuteButton"
                         Click="MuteButton_Click" 
                         ClickMode="Release"
                         Foreground="{StaticResource BrokenWhite}"
                         Background="Transparent"
                         BorderBrush="Transparent"
                         Style="{StaticResource volumebuttonsstyle}">
-                    <FontIcon x:Name="VolumeIcon" Glyph="&#xE767;" FontSize="17" />
+                    <FontIcon x:Name="visualizerVolumeIcon" Glyph="&#xE767;" FontSize="17" />
                 </Button>
 
-                <Slider x:Name="volumeSlider"
-                    Minimum="0"
-                    Maximum="100"
-                    Value="50"
-                    Width="80"
-                    Margin="0,4,0,0"
-                    ValueChanged="VolumeSlider_ValueChanged"
-                    Style="{StaticResource SliderStyle}"/>
+                <Slider x:Name="visualizerVolumeSlider"
+                        Minimum="0"
+                        Maximum="100"
+                        Value="{Binding ElementName=volumeSlider, Path=Value, Mode=TwoWay}"
+                        Width="100"
+                        Margin="0,4,0,0"
+                        ValueChanged="VolumeSlider_ValueChanged"
+                        Style="{StaticResource SliderStyle}"/>
 
-                <Button x:Name="FullScreenButton"
-                        Click="FullScreenButton_Click" 
+                <Button x:Name="ExitButton"
+                        Click="ExitVisualizer_Tapped"
                         ClickMode="Release"
                         Foreground="{StaticResource BrokenWhite}"
                         Background="Transparent"
                         BorderBrush="Transparent"
                         Style="{StaticResource volumebuttonsstyle}">
-                    <FontIcon x:Name="FullScreenIcon" Glyph="&#xE7F4;" FontSize="17" />
+                    <FontIcon x:Name="ExitVisualizerIcon" Glyph="&#xE7F4;" FontSize="17" />
                 </Button>
-
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Column="2" Grid.Row="1" Visibility="{Binding QueueVisibility}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-              Margin="0, 10, 0, 20">
+        <Grid x:Name="LayoutRoot" Background="{StaticResource WindowBackgroundBrush}">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="25*"/>
+                <ColumnDefinition Width="50*"/>
+                <ColumnDefinition Width="25*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+                <RowDefinition/>
+                <RowDefinition Height="90"/>
+            </Grid.RowDefinitions>
+
             <Grid.Resources>
+                <converters:CeilingConverter x:Key="DurationCeilingConverter"/>
+                <converters:StringJoinConverter x:Key="StringJoinConverter"/>
+                <converters:IPictureImageConverter x:Key="IPictureImageConverter"/>
+                <converters:BooleanToGlyphConverter x:Key="BoolToGlyph" />
+                <converters:NullToVisibilityConverter x:Key="NullToVisible" />
                 <Style x:Key="FlyoutStyle" TargetType="MenuFlyoutPresenter">
                     <Setter Property="Background" Value="#732e18"/>
                     <Setter Property="BorderThickness" Value="0"/>
                     <Setter Property="CornerRadius" Value="12"/>
                     <Setter Property="Padding" Value="0"/>
                 </Style>
+                <DataTemplate x:Key="ListFlyoutCollectionTemplate" x:DataType="sources:Collection">
+                    <StackPanel Orientation="Horizontal" Padding="5">
+                        <Image Source="{Binding collection_cover}" Stretch="UniformToFill" Width="30" Height="30" Margin="-10,0,10,0"/>
+                        <TextBlock Text="{Binding collection_name}" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="13" Foreground="White"/>
+                    </StackPanel>
+                </DataTemplate>
+                <DataTemplate x:Key="SongListViewTemplate">
+                    <Grid Padding="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="30"/>
+                            <ColumnDefinition Width="1.7*" />
+                            <ColumnDefinition Width="1.7*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.ContextFlyout>
+                            <MenuFlyout x:Name="SongFlyoutContext" MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}" Opening="SongFlyoutContext_Opening">
+                                <MenuFlyoutItem Text="add to queue" Click="AddToQueue" Tag="{Binding}"/>
+                                <MenuFlyoutItem Text="delete from collection" Click="DeleteFromCollection" Tag="{Binding}"/>
+                            </MenuFlyout>
+
+                        </Grid.ContextFlyout>
+
+                        <!--<TextBlock Grid.Column="0" 
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       FontSize="12"
+                                       Margin="0,0,0,0"
+                                       Text="{Binding Index, Converter={StaticResource IndexConverter}}" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>-->
+
+                        <TextBlock x:Name="Index" 
+                                       Grid.Column="0" 
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       FontSize="12"
+                                       Margin="0,0,0,0"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+
+                        <Image Grid.Column="1"
+                                   Source="{Binding Pictures, Converter={StaticResource IPictureImageConverter}}"
+                                   Width="30" Height="30"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,0,0"/>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{Binding Title}" 
+                                           Style="{StaticResource SubtitleTextBlockStyle}" 
+                                           FontSize="12" 
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis"/>
+
+                            <TextBlock Text="{Binding Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}" 
+                                           Style="{StaticResource BodyTextBlockStyle}" 
+                                           VerticalAlignment="Center"
+                                           FontSize="12"
+                                           Margin="10,0,0,0"
+                                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                                           TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="3"
+                               VerticalAlignment="Center"
+                               FontSize="12" 
+                               Text="{Binding Album}"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+
+                        <TextBlock Grid.Column="4"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Left"
+                               Margin="0,0,10,0"
+                               Text="{Binding Duration, Converter={StaticResource DurationCeilingConverter}}"
+                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+
+                        <StackPanel Orientation="Horizontal" Grid.Column="5" Spacing="0" Padding="0" HorizontalAlignment="Right">
+                            <Button Click="ListLikeButton_Click" 
+                                        ClickMode="Release"
+                                        Width="25" Height="25"
+                                        Padding="0"
+                                        Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                                        BorderBrush="Transparent"
+                                        Background="Transparent"
+                                        ToolTipService.ToolTip="ListLike">
+                                <FontIcon x:Name="LikeIcon" 
+                                              Glyph="{Binding liked, Converter={StaticResource BoolToGlyph}}" 
+                                              FontSize="13"/>
+                            </Button>
+
+                            <Button HorizontalAlignment="Right"
+                                        ClickMode="Release"
+                                        Width="25" Height="25"
+                                        Padding="0"
+                                        Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                                        BorderBrush="Transparent"
+                                        Background="Transparent"
+                                        ToolTipService.ToolTip="add to collection">
+                                <FontIcon x:Name="AddToCollectionIcon" 
+                                              Glyph="&#xECC8;" 
+                                              FontSize="13"/>
+                                <Button.Flyout>
+                                    <Flyout x:Name="ListAddToCollectionFlyout" FlyoutPresenterStyle="{StaticResource FlyoutStyle}">
+
+                                        <ListView x:Name="ListFlyoutCollectionsList"
+                                                      Loaded="ListFlyoutCollectionsList_Loaded"
+                                                      ItemTemplate="{StaticResource ListFlyoutCollectionTemplate}"
+                                                      SelectionMode="Single"
+                                                      SelectionChanged="ListFlyoutCollectionsList_SelectionChanged"
+                                                      Width="200"
+                                                      MaxHeight="250"
+                                                      ShowsScrollingPlaceholders="True"
+                                                      BorderThickness="0">
+                                        </ListView>
+
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+
+
+
+                    </Grid>
+                </DataTemplate>
+
+                <Style TargetType="AppBarButton">
+                    <Setter Property="Width" Value="50"/>
+                    <Setter Property="Height" Value="50"/>
+                </Style>
             </Grid.Resources>
-            
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" 
-                           Text="Queue" 
-                           FontSize="18" 
-                           HorizontalAlignment="Center"
-                           Margin="15,10,30,10" 
-                           Foreground="White"
-                           FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                           FontWeight="SemiBold"/>
+            <Grid x:Name="TitleBarContainer" Grid.Row="0" Grid.ColumnSpan="3">
 
-            <Rectangle Grid.Row="0"
-                       Height="0.5" 
-                       VerticalAlignment="Bottom"
-                       HorizontalAlignment="Stretch"
-                       Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                       Margin="25, 4, 45, 3"/>  
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <ListView Grid.Row="1" 
-                          ItemsSource="{Binding SongQueue.queue}"
-                          Margin="15,0,15,0"
-                          ShowsScrollingPlaceholders="True"
-                          BorderThickness="0">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="sources:Song">
+                <!--<StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Top"
+                            Spacing="0">
+                        <AppBarButton x:Name="GoBackBtn"
+                                  Click="GoBackBtn_Click"
+                                  Margin="0,0,0,0">
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Back"/>
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+
+                        <AppBarButton x:Name="GoForwardBtn"
+                                  Click="GoForwardBtn_Click"
+                                  Margin="0,0,0,0">
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Forward"/>
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                    </StackPanel>-->
+
+                <!--<AutoSuggestBox x:Name="MainSearch"
+                                PlaceholderText="Search..."
+                                TextChanged="MainSearch_TextChanged"
+                                QueryIcon="Find"
+                                QuerySubmitted="MainSearch_QuerySubmitted"
+                                SuggestionChosen="MainSearch_SuggestionChosen"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Width="300"
+                                Height="35"
+                                Margin="0,0,0,0" 
+                                CornerRadius="22"
+                                Background="{ThemeResource ButtonBackgroundBrush}"
+                                Foreground="{ThemeResource ButtonForegroundBrush}"
+                                BorderBrush="{ThemeResource ButtonBackgroundBrush}"
+                                Grid.Column="1">
+                        <AutoSuggestBox.Resources>
+                            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
+                            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
+                            <SolidColorBrush x:Key="TextControlBackgroundGotFocus" Color="{StaticResource FoxyDark}"/>
+                        </AutoSuggestBox.Resources>
+                    </AutoSuggestBox>-->
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Top"
+                            Spacing="0">
+
+                    <AppBarButton x:Name="MinimizeBtn"
+                                  Click="MinimizeBtn_Click">
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="Remove"/>
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+
+                    <AppBarButton x:Name="MaximizeRestoreBtn"
+                                  Click="MaximizeRestoreBtn_Click">
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="FullScreen"/>
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+
+                    <AppBarButton x:Name="CloseBtn"
+                                  Click="CloseBtn_Click">
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="Cancel"/>
+                        </AppBarButton.Icon>
+                        <AppBarButton.Resources>
+                            <SolidColorBrush x:Key="AppBarButtonBackgroundPointerOver" Color="{StaticResource FoxyDark}"/>
+                        </AppBarButton.Resources>
+                    </AppBarButton>
+                </StackPanel>
+
+            </Grid>
+
+            <!--GRADIENT GRID -->
+            <Rectangle x:Name="LeftSection"
+                               MaxHeight="724" 
+                               MaxWidth="373.6"
+                               Margin="5,0,5,0"
+                               Stroke="Transparent"              
+                               Grid.Column="0"
+                               Grid.Row="1"
+                               RadiusX="50"
+                               RadiusY="50"
+                               Fill="{ThemeResource ColorDownGradientBrush}"/>
+
+            <Rectangle x:Name="RightSection"
+                               MaxHeight="724" 
+                               MaxWidth="373.6"
+                               Margin="5,0,5,0"
+                               Stroke="Transparent"  
+                               Grid.Column="2"
+                               Grid.Row="1"
+                               RadiusX="50"
+                               RadiusY="50"
+                               Fill="{ThemeResource ColorDownGradientBrush}"/>
+
+            <Rectangle x:Name="BottomSection" 
+                           Height="80" 
+                           MaxWidth="1530"
+                           Margin="5,5,5,5"
+                           Stroke="Transparent"  
+                           Grid.ColumnSpan="3"
+                           Grid.Row="2"
+                           RadiusX="30"
+                           RadiusY="30"
+                           Fill="{ThemeResource ColorUpGradientBrush}"/>
+
+            <Rectangle x:Name="MiddleSection"
+                               MaxHeight="724"
+                               MaxWidth="768.8"
+                               Margin="0,0,0,0"
+                               Stroke="Transparent" 
+                               Grid.Column="1"
+                               Grid.Row="1"
+                               RadiusX="50"
+                               RadiusY="50"
+                               Fill="{ThemeResource ColorDownGradientBrush}"/>
+
+            <Grid x:Name="collectionInfo" Grid.Column="1" Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="0.35*" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0"
+                          Grid.Row="0"
+                          Margin="25,0,0,0"
+                          Background="Transparent"
+                          Tapped="CollectionCoverImage_Tapped"
+                          SizeChanged="CollectionCoverGrid_SizeChanged"
+                          IsTapEnabled="True">
+
+                    <Image x:Name="CollectionCoverImage"
+                               Source="{Binding SelectedCollection.collection_cover, Mode=OneWay}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Stretch="UniformToFill"
+                               IsHitTestVisible="False"/>
+                </Grid>
+
+                <TextBlock Grid.Column="1"
+                               Grid.Row="0"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Left"
+                               FontSize="30"
+                               FontWeight="ExtraBold"
+                               FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                               Margin="10,0,0,0"
+                               Text="{Binding SelectedCollection.collection_name}"
+                               Tapped="CollectionName_Tapped"
+                               Foreground="White"/>
+
+                <TextBlock Grid.Column="1"
+                               Grid.Row="0"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Left"
+                               Margin="10,53,0,0"
+                               FontSize="16"
+                               Text="{Binding SelectedCollection.collection_description}"
+                               Tapped="CollectionDescription_Tapped"
+                               Foreground="{StaticResource BrokenWhite}"/>
+
+                <TextBlock Grid.Column="1"
+                               Grid.Row="0"
+                               VerticalAlignment="Bottom"
+                               HorizontalAlignment="Left"
+                               Margin="10,0,0,8"
+                               FontSize="11"
+                               Foreground="{StaticResource BrokenWhite}">
+                        <Run Text="{Binding SelectedCollection.collection_size}"/>
+                        <Run Text="songs,"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="1"
+                               Grid.Row="0"
+                               VerticalAlignment="Bottom"
+                               HorizontalAlignment="Left"
+                               Margin="65,0,0,8"
+                               FontSize="11"
+                               Foreground="{StaticResource BrokenWhite}">
+                        <Run Text="{Binding SelectedCollection.collection_duration}"/>
+                        <Run Text="min"/>
+                </TextBlock>
+            </Grid>
+
+            <Grid x:Name="midSection" Grid.Column="1" Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="3*" />
+                    <RowDefinition Height="5*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="1" 
+                          VerticalAlignment="Top" 
+                          HorizontalAlignment="Stretch"
+                          Margin="25, 0, 45, 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="#" FontWeight="Light" FontSize="12" Margin="0, 0, 16, 0" HorizontalAlignment="Right"
+                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBlock Grid.Column="1" Text="title" FontWeight="Light" FontSize="12" Margin="36, 0, 0, 0" HorizontalAlignment="Left"
+                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBlock Grid.Column="2" Text="album" FontWeight="Light" FontSize="12" Margin="14, 0, 0, 0" HorizontalAlignment="Left"
+                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBlock Grid.Column="3" Text="duration" FontWeight="Light" FontSize="12" HorizontalAlignment="Left" Margin="0, 0, 67, 0"
+                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" />
+                </Grid>
+
+                <Rectangle Grid.Row="1"
+                               Height="1" 
+                               VerticalAlignment="Top"
+                               HorizontalAlignment="Stretch"
+                               Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                               Margin="25, 22, 45, 0"/>
+
+                <!--ALL SONGS VIEW -->
+                <ListView x:Name="SongsView"
+                              ContainerContentChanging="SongsView_ContainerContentChanging"
+                                  ItemsSource="{Binding CurrentCollectionSongs}"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch"
+                                  ItemTemplate="{StaticResource SongListViewTemplate}"
+                                  SelectionMode="Single"
+                                  SelectedItem="{Binding SelectedSong, Mode=TwoWay}"
+                                  SelectionChanged="SongsView_SelectionChanged"
+                                  ShowsScrollingPlaceholders="True"
+                                  Margin="25, 25, 45, 25"
+                                  BorderThickness="0"
+                                  BorderBrush="{StaticResource WindowBackgroundBrush}"
+                                  Grid.Column="1"
+                                  Grid.Row="1">
+                </ListView>
+            </Grid>
+            <Grid x:Name="leftBottomSection" Grid.Column="0" Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="0.7*"/>
+                    <ColumnDefinition Width="1.3*"/>
+                    <ColumnDefinition Width="1.1*"/>
+                </Grid.ColumnDefinitions>
+
+                <Image Grid.Column="0"
+                           Source="{Binding PlayingSong.Pictures, Converter={StaticResource IPictureImageConverter}}"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Stretch"
+                           Margin="25,0,0,0"/>
+
+                <Grid x:Name="leftBottomSectionTitleArtist" Grid.Column="1" Margin="0,15,0,15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="1*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                                   VerticalAlignment="Bottom"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   Text="{Binding PlayingSong.Title}"
+                                   FontSize="15"
+                                   FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"/>
+
+                    <TextBlock Grid.Row="1"
+                                   VerticalAlignment="Top"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   Text="{Binding PlayingSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}"
+                                   FontSize="12"
+                                   FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                                   Foreground="{StaticResource BrokenWhite}"/>
+                </Grid>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0" Spacing="5">
+
+                    <StackPanel.Resources>
+
+                        <DataTemplate x:Key="FlyoutCollectionTemplate" x:DataType="sources:Collection">
+                            <StackPanel Orientation="Horizontal" Padding="5">
+                                <Image Source="{Binding collection_cover}" Stretch="UniformToFill" Width="30" Height="30" Margin="-10,0,10,0"/>
+                                <TextBlock Text="{Binding collection_name}" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="13" Foreground="White"/>
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <Style x:Key="FlyoutStyle" TargetType="FlyoutPresenter">
+                            <Setter Property="Background" Value="#402218"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="CornerRadius" Value="12"/>
+                            <Setter Property="Padding" Value="0"/>
+                        </Style>
+
+                    </StackPanel.Resources>
+
+                    <Button Click="LikeButton_Click" 
+                                ClickMode="Release"
+                                Width="35" Height="35"
+                                Padding="0"
+                                Foreground="{StaticResource BrokenWhite}"
+                                BorderBrush="Transparent"
+                                Background="Transparent"
+                                ToolTipService.ToolTip="Like">
+                        <FontIcon x:Name="LikeIcon" 
+                                      Glyph="{Binding PlayingSong.liked, Converter={StaticResource BoolToGlyph}}" 
+                                      FontSize="15"/>
+                    </Button>
+
+                    <Button ClickMode="Release"
+                                Width="35" Height="35"
+                                Margin="0,0,0,0"
+                                Padding="0"
+                                Foreground="{StaticResource BrokenWhite}"
+                                Visibility="{Binding PlayingSong, Converter={StaticResource NullToVisible}}"
+                                BorderBrush="Transparent"
+                                Background="Transparent"
+                                ToolTipService.ToolTip="Add to collection">
+                        <FontIcon x:Name="AddToCollectionIcon" Glyph="&#xECC8;" FontSize="15"/>
+
+                        <Button.Flyout>
+                            <Flyout x:Name="AddToCollectionFlyout" FlyoutPresenterStyle="{StaticResource FlyoutStyle}">
+
+                                <ListView x:Name="FlyoutCollectionsList"
+                                              ItemsSource="{Binding AllCollections}"
+                                              ItemTemplate="{StaticResource FlyoutCollectionTemplate}"
+                                              SelectionMode="Single"
+                                              SelectionChanged="FlyoutCollectionsList_SelectionChanged"
+                                              Width="220"
+                                              MaxHeight="300"
+                                              ShowsScrollingPlaceholders="True"
+                                              BorderThickness="0">
+                                </ListView>
+
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+
+                </StackPanel>
+
+            </Grid>
+
+            <Grid x:Name="leftSection" Grid.Column="0" Grid.Row="1">
+
+                <Grid.Resources>
+                    <Style x:Key="FlyoutStyle" TargetType="MenuFlyoutPresenter">
+                        <Setter Property="Background" Value="#732e18"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="CornerRadius" Value="12"/>
+                        <Setter Property="Padding" Value="0"/>
+                    </Style>
+                    <DataTemplate x:Key="CollectionListViewTemplate" x:DataType="sources:Collection">
                         <StackPanel Orientation="Horizontal" Padding="5">
-                            
-                            <StackPanel.ContextFlyout>
-                                <MenuFlyout x:Name="QueueFlyoutContext" MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}">
-                                    <MenuFlyoutItem Text="remove from queue" Click="RemoveFromQueue" Tag="{Binding}"/>
-                                </MenuFlyout>
 
+                            <StackPanel.ContextFlyout>
+                                <MenuFlyout MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}">
+                                    <MenuFlyoutItem Text="delete" 
+                                                        Click="DeleteCollection" 
+                                                        Tag="{Binding}"/>
+                                </MenuFlyout>
                             </StackPanel.ContextFlyout>
-                            
-                            <Image Source="{Binding Pictures, Converter={StaticResource IPictureImageConverter}}" Width="30" Height="30" Stretch="UniformToFill" Margin="0,0,10,0"/>
+
+                            <Image Source="{Binding collection_cover}" 
+                                       Width="30" 
+                                       Height="30" 
+                                       Margin="-5,0,10,0"
+                                       Stretch="UniformToFill"/>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" Foreground="White" TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}" FontSize="11" Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding collection_name}" FontWeight="Light"/>
+                                <TextBlock Text="{Binding collection_description}" FontSize="11" Foreground="Gray" FontWeight="Light"/>
                             </StackPanel>
                         </StackPanel>
                     </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
-
-        <Grid Grid.Column="2" Grid.Row="1" Visibility="{Binding TagEditorVisibility}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="2*" />
-                <RowDefinition Height="5*" />
-            </Grid.RowDefinitions>
-
-            <Image Grid.Column="2"
-                   Grid.Row="0"
-                   Source="{Binding PlayingSong.Pictures, Converter={StaticResource IPictureImageConverter}}"
-                   HorizontalAlignment="Stretch"
-                   VerticalAlignment="Stretch"
-                   Margin="0,0,0,0"
-                   Tapped="AlbumCoverImage_Tapped" 
-                   IsHitTestVisible="True"/>
-
-            <Grid Grid.Column="2" 
-                      Grid.Row="1"
-                      VerticalAlignment="Stretch" 
-                      HorizontalAlignment="Stretch"
-                      Margin="0, 10, 0, 20">
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="5*"/>
-                </Grid.ColumnDefinitions>
+                </Grid.Resources>
 
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="1.5*" />
                     <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="0.75*" />
+                    <RowDefinition Height="0.75*" />
+                    <RowDefinition Height="7*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Column="0"
-                               Grid.Row="0"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               Margin="10,0,0,0"
-                               Text="title:"
-                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="titleInput" Grid.Column="1" Grid.Row="0" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Left"
-                         Text="{Binding PlayingSong.Title}">
-                </TextBox>
-
-                <TextBlock Grid.Column="0"
-                               Grid.Row="1"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               Margin="10,0,0,0"
-                               Text="artists:"
-                               Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="artistsInput" Grid.Column="1" Grid.Row="1" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                         Text="{Binding PlayingSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}">
-                </TextBox>
-
-
-                <TextBlock Grid.Column="0"
-                            Grid.Row="2"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Center"
+                <Button x:Name="NewCollectionButton"
+                            Grid.Row="0"
+                            Click="NewCollectionButton_Click" 
+                            ClickMode="Release"
                             Margin="10,0,0,0"
-                            Text="album:"
-                            Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="albumInput" Grid.Column="1" Grid.Row="2" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                         Text="{Binding PlayingSong.Album}">
-                </TextBox>
+                            Width="40"
+                            Height="40"
+                            Padding="0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Stretch"
+                            Foreground="{StaticResource BrokenWhite}"
+                            BorderBrush="Transparent"
+                            Background="Transparent">
+                    <FontIcon x:Name="NewCollectionIcon" 
+                                  Glyph="&#xECC8;" 
+                                  FontSize="17" 
+                                  VerticalAlignment="Center"/>
+                </Button>
 
-                <TextBlock Grid.Column="0"
-                           Grid.Row="3"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Center"
-                           Margin="10,0,0,0"
-                           Text="year:"
-                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="yearInput" Grid.Column="1" Grid.Row="3" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                         Text="{Binding PlayingSong.Year}">
-                </TextBox>
+                <Button x:Name="AllSongsButton"
+                            Grid.Row="2"
+                            Click="AllSongsButton_Click" 
+                            ClickMode="Release"
+                            Margin="35,0,35,0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            VerticalAlignment="Stretch"
+                            Foreground="{StaticResource BrokenWhite}"
+                            BorderBrush="Transparent"
+                            Background="Transparent">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <FontIcon x:Name="HouseIcon" 
+                                      Glyph="&#xEA8A;" 
+                                      FontSize="17" 
+                                      VerticalAlignment="Center"/>
+                        <TextBlock VerticalAlignment="Center"
+                                       FontSize="13"
+                                       Margin="10,0,0,0"
+                                       Text="All Songs"
+                                       Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                </Button>
 
-                <TextBlock Grid.Column="0"
-                           Grid.Row="4"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Center"
-                           Margin="10,0,0,0"
-                           Text="track:"
-                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="trackInput" Grid.Column="1" Grid.Row="4" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                         Text="{Binding PlayingSong.Track}">
-                </TextBox>
+                <Button x:Name="LikedSongsButton"
+                            Grid.Row="3"
+                            Click="LikedSongsButton_Click" 
+                            ClickMode="Release"
+                            Margin="35,0,35,0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            VerticalAlignment="Stretch"
+                            Foreground="{StaticResource BrokenWhite}"
+                            BorderBrush="Transparent"
+                            Background="Transparent">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <FontIcon x:Name="HeartIcon" 
+                                      Glyph="&#xEB52;" 
+                                      FontSize="17" 
+                                      VerticalAlignment="Center"/>
+                        <TextBlock VerticalAlignment="Center"
+                                       Margin="10,0,0,0"
+                                       FontSize="13"
+                                       Text="Liked Songs"
+                                       Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                </Button>
 
-                <TextBlock Grid.Column="0"
-                           Grid.Row="5"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Center"
-                           Margin="10,0,0,0"
-                           Text="genres:"
-                           Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBox x:Name="genresInput" Grid.Column="1" Grid.Row="5" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                         Text="{Binding PlayingSong.Genres, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}">
-                </TextBox>
+                <Rectangle Grid.Row="4"
+                               Height="0.5" 
+                               VerticalAlignment="Top"
+                               HorizontalAlignment="Stretch"
+                               Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                               Margin="25, 4, 45, 0"/>
 
-                <Button x:Name="saveTagsButton"
-                        Grid.Column="1"
-                        Grid.Row="6"
-                        Content="save"
-                        Click="saveTags" 
-                        ClickMode="Release"
-                        Margin="0,5,80,0" Width="100"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                <!--ALL COLLECTIONS VIEW -->
+                <ListView x:Name="CollectionsView"
+                      ItemsSource="{Binding AllCollections}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      ItemTemplate="{StaticResource CollectionListViewTemplate}"
+                      SelectionMode="Single"
+                      SelectedItem="{Binding SelectedCollection, Mode=TwoWay}"
+                      SelectionChanged="CollectionsView_SelectionChanged"
+                      ShowsScrollingPlaceholders="True"
+                      Margin="25, 5, 25, 25"
+                      BorderThickness="0"
+                      Grid.Row="4">
+                </ListView>
+
             </Grid>
-        </Grid>
+            <Grid Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center">
+                <MediaPlayerElement x:Name="mediaPlayerElement"
+                                        AutoPlay="False" AreTransportControlsEnabled="True"
+                                        Background="Transparent">
+                    <MediaPlayerElement.TransportControls>
+                        <local:CustomMediaTransportControls PreviousTrackClicked="PreviousTrackClicked"
+                                                                NextTrackClicked="NextTrackClicked"
+                                                                RepeatClicked="RepeatClicked"
+                                                                ShuffleClicked="ShuffleClicked"
+                                                                IsNextTrackButtonVisible="True"
+                                                                IsPreviousTrackButtonVisible="True"
+                                                                IsSeekBarVisible="True"
+                                                                IsSeekEnabled="True"
+                                                                IsCompact="False"
+                                                                IsRepeatButtonVisible="True"
+                                                                IsRepeatEnabled="True"
+                                                                IsZoomButtonVisible="False"
+                                                                IsZoomEnabled="False"
+                                                                HorizontalAlignment="Stretch"
+                                                                Background="Transparent"
+                                                                Style="{StaticResource myTransportControlsStyle}" />
 
+                    </MediaPlayerElement.TransportControls>
+                </MediaPlayerElement>
+            </Grid>
+
+            <Grid x:Name="volumeSection" Grid.Column="2" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 10, 0, 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" 
+                                Orientation="Horizontal" 
+                                Spacing="3" 
+                                VerticalAlignment="Center" 
+                                Margin="0,0,10,0"
+                                >
+
+                    <Button x:Name="QueueButton"
+                                Click="QueueButton_Click" 
+                                ClickMode="Release"
+                                Foreground="{StaticResource BrokenWhite}"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                Style="{StaticResource volumebuttonsstyle}">
+                        <FontIcon x:Name="QueueIcon" Glyph="&#xE71D;" FontSize="17"/>
+                    </Button>
+
+                    <Button x:Name="MuteButton"
+                                Click="MuteButton_Click" 
+                                ClickMode="Release"
+                                Foreground="{StaticResource BrokenWhite}"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                Style="{StaticResource volumebuttonsstyle}">
+                        <FontIcon x:Name="VolumeIcon" Glyph="&#xE767;" FontSize="17" />
+                    </Button>
+
+                    <Slider x:Name="volumeSlider"
+                            Minimum="0"
+                            Maximum="100"
+                            Value="50"
+                            Width="80"
+                            Margin="0,4,0,0"
+                            ValueChanged="VolumeSlider_ValueChanged"
+                            Style="{StaticResource SliderStyle}"/>
+
+                    <Button x:Name="FullScreenButton"
+                                Click="FullScreenButton_Click" 
+                                ClickMode="Release"
+                                Foreground="{StaticResource BrokenWhite}"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                Style="{StaticResource volumebuttonsstyle}">
+                        <FontIcon x:Name="FullScreenIcon" Glyph="&#xE7F4;" FontSize="17" />
+                    </Button>
+
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Column="2" Grid.Row="1" Visibility="{Binding QueueVisibility}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                      Margin="0, 10, 0, 20">
+                <Grid.Resources>
+                    <Style x:Key="FlyoutStyle" TargetType="MenuFlyoutPresenter">
+                        <Setter Property="Background" Value="#732e18"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="CornerRadius" Value="12"/>
+                        <Setter Property="Padding" Value="0"/>
+                    </Style>
+                </Grid.Resources>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" 
+                                   Text="Queue" 
+                                   FontSize="18" 
+                                   HorizontalAlignment="Center"
+                                   Margin="15,10,30,10" 
+                                   Foreground="White"
+                                   FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                                   FontWeight="SemiBold"/>
+
+                <Rectangle Grid.Row="0"
+                               Height="0.5" 
+                               VerticalAlignment="Bottom"
+                               HorizontalAlignment="Stretch"
+                               Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                               Margin="25, 4, 45, 3"/>
+
+                <ListView Grid.Row="1" 
+                                  ItemsSource="{Binding SongQueue.queue}"
+                                  Margin="15,0,15,0"
+                                  ShowsScrollingPlaceholders="True"
+                                  BorderThickness="0">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="sources:Song">
+                            <StackPanel Orientation="Horizontal" Padding="5">
+
+                                <StackPanel.ContextFlyout>
+                                    <MenuFlyout x:Name="QueueFlyoutContext" MenuFlyoutPresenterStyle="{StaticResource FlyoutStyle}">
+                                        <MenuFlyoutItem Text="remove from queue" Click="RemoveFromQueue" Tag="{Binding}"/>
+                                    </MenuFlyout>
+
+                                </StackPanel.ContextFlyout>
+
+                                <Image Source="{Binding Pictures, Converter={StaticResource IPictureImageConverter}}" Width="30" Height="30" Stretch="UniformToFill" Margin="0,0,10,0"/>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}" FontSize="11" Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+
+            <Grid Grid.Column="2" Grid.Row="1" Visibility="{Binding TagEditorVisibility}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*" />
+                    <RowDefinition Height="5*" />
+                </Grid.RowDefinitions>
+
+                <Image Grid.Column="2"
+                           Grid.Row="0"
+                           Source="{Binding PlayingSong.Pictures, Converter={StaticResource IPictureImageConverter}}"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Stretch"
+                           Margin="0,0,0,0"
+                           Tapped="AlbumCoverImage_Tapped" 
+                           IsHitTestVisible="True"/>
+
+                <Grid Grid.Column="2" 
+                              Grid.Row="1"
+                              VerticalAlignment="Stretch" 
+                              HorizontalAlignment="Stretch"
+                              Margin="0, 10, 0, 20">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="5*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="1*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                                       Grid.Row="0"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       Margin="10,0,0,0"
+                                       Text="title:"
+                                       Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBox x:Name="titleInput" Grid.Column="1" Grid.Row="0" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Left"
+                                 Text="{Binding PlayingSong.Title}">
+                    </TextBox>
+
+                    <TextBlock Grid.Column="0"
+                                       Grid.Row="1"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       Margin="10,0,0,0"
+                                       Text="artists:"
+                                       Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBox x:Name="artistsInput" Grid.Column="1" Grid.Row="1" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                                 Text="{Binding PlayingSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}">
+                    </TextBox>
+
+
+                    <TextBlock Grid.Column="0"
+                                    Grid.Row="2"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    Margin="10,0,0,0"
+                                    Text="album:"
+                                    Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBox x:Name="albumInput" Grid.Column="1" Grid.Row="2" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                                 Text="{Binding PlayingSong.Album}">
+                    </TextBox>
+
+                    <TextBlock Grid.Column="0"
+                                   Grid.Row="3"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   Margin="10,0,0,0"
+                                   Text="year:"
+                                   Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBox x:Name="yearInput" Grid.Column="1" Grid.Row="3" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                                 Text="{Binding PlayingSong.Year}">
+                    </TextBox>
+
+                    <TextBlock Grid.Column="0"
+                                   Grid.Row="4"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   Margin="10,0,0,0"
+                                   Text="track:"
+                                   Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBox x:Name="trackInput" Grid.Column="1" Grid.Row="4" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                                 Text="{Binding PlayingSong.Track}">
+                    </TextBox>
+
+                    <TextBlock Grid.Column="0"
+                                   Grid.Row="5"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   Margin="10,0,0,0"
+                                   Text="genres:"
+                                   Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBox x:Name="genresInput" Grid.Column="1" Grid.Row="5" FontSize="12" FontWeight="Normal" Margin="10, 0, 30, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                                 Text="{Binding PlayingSong.Genres, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}">
+                    </TextBox>
+
+                    <Button x:Name="saveTagsButton"
+                                Grid.Column="1"
+                                Grid.Row="6"
+                                Content="save"
+                                Click="saveTags" 
+                                ClickMode="Release"
+                                Margin="0,5,80,0" Width="100"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+                </Grid>
+            </Grid>
+
+        </Grid>
     </Grid>
 
 </Window>
