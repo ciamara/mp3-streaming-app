@@ -322,9 +322,9 @@
             <Grid x:Name="TitleBarContainer" Grid.Row="0" Grid.ColumnSpan="3">
 
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="6*" />
+                    <ColumnDefinition Width="2*"/>
                 </Grid.ColumnDefinitions>
 
                 <!--<StackPanel Grid.Column="0"
@@ -348,12 +348,8 @@
                         </AppBarButton>
                     </StackPanel>-->
 
-                <!--<AutoSuggestBox x:Name="MainSearch"
-                                PlaceholderText="Search..."
-                                TextChanged="MainSearch_TextChanged"
-                                QueryIcon="Find"
+                <AutoSuggestBox x:Name="downloader"
                                 QuerySubmitted="MainSearch_QuerySubmitted"
-                                SuggestionChosen="MainSearch_SuggestionChosen"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Width="300"
@@ -369,10 +365,40 @@
                             <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
                             <SolidColorBrush x:Key="TextControlBackgroundGotFocus" Color="{StaticResource FoxyDark}"/>
                         </AutoSuggestBox.Resources>
-                    </AutoSuggestBox>-->
+                </AutoSuggestBox>
+
+                <ProgressRing x:Name="downloadProgressRing"
+                              Minimum="0" 
+                              Maximum="100"
+                              Grid.Column="1"
+                              Value="0"
+                              Width="20"
+                              Height="20"
+                              IsActive="False"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Margin="0,0,350,0"/>
+
+
+
+                <Button x:Name="downloadButton" 
+                        Grid.Column="1"
+                        HorizontalAlignment="Center"
+                        Click="downloadButton_Click"
+                        VerticalAlignment="Center"
+                        Margin="350,0,0,0" 
+                        ClickMode="Release"
+                        Foreground="{StaticResource BrokenWhite}"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        Style="{StaticResource volumebuttonsstyle}">
+                    
+                    <FontIcon Glyph="&#xE896;" />
+                </Button>
 
                 <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
+                            HorizontalAlignment="Right"
                             VerticalAlignment="Top"
                             Spacing="0">
 
@@ -570,7 +596,17 @@
                                   BorderBrush="{StaticResource WindowBackgroundBrush}"
                                   Grid.Column="1"
                                   Grid.Row="1">
+                    <ListView.Resources>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="Transparent" />
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="Transparent" />
+                        <SolidColorBrush x:Key="ListViewItemFocusBorderBrush" Color="Transparent" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorBrush" Color="Transparent" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPointerOverBrush" Color="Transparent" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPressedBrush" Color="Transparent" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorDisabledBrush" Color="Transparent" />
+                    </ListView.Resources>
                 </ListView>
+
             </Grid>
             <Grid x:Name="leftBottomSection" Grid.Column="0" Grid.Row="2">
                 <Grid.ColumnDefinitions>

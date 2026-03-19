@@ -65,6 +65,7 @@ namespace Kith
         private CollectionsView CollectionViewModel { get; set; }
 
         private Song selectedSongBeforeUpdate;
+
         private Song previousSong;
         private TimeSpan lastPlayedPosition;
 
@@ -269,7 +270,12 @@ namespace Kith
                         using (TagLib.File tfile = TagLib.File.Create(song_file))
                         {
                             string currentTitle = tfile.Tag.Title ?? Path.GetFileNameWithoutExtension(song_file);
-                            string[] currentArtists = tfile.Tag.Artists ?? Array.Empty<string>();
+                            //string[] currentArtists = tfile.Tag.Artists ?? Array.Empty<string>();
+
+                            string[] currentArtists = (tfile.Tag.Artists != null && tfile.Tag.Artists.Length > 0)
+                                    ? tfile.Tag.Artists
+                                    : new string[] { "Unknown Artist" };
+
                             string currentAlbum = tfile.Tag.Album ?? "Unknown Album";
                             uint currentYear = tfile.Tag.Year;
                             uint currentTrack = tfile.Tag.Track;
@@ -388,7 +394,7 @@ namespace Kith
         {
             e.Handled = true;
 
-            if (ViewModel.SelectedSong == null)
+            if (ViewModel.PlayingSong == null)
             {
                 //System.Console.WriteLine("No song selected.");
                 return;
@@ -409,15 +415,15 @@ namespace Kith
 
             if (file != null)
             {
-                await UpdateAlbumArt(ViewModel.SelectedSong, file);
+                await UpdateAlbumArt(ViewModel.PlayingSong, file);
             }
         }
         private async Task UpdateAlbumArt(Song song, StorageFile imageFile)
         {
 
-            bool isCurrentlySelected = (ViewModel.SelectedSong?.FileName == song.FileName);
+            bool isCurrentlyPlaying = (ViewModel.PlayingSong?.FileName == song.FileName);
 
-            if (isCurrentlySelected && mediaPlayerElement.MediaPlayer.Source != null)
+            if (isCurrentlyPlaying && mediaPlayerElement.MediaPlayer.Source != null)
             {
                 lastPlayedPosition = mediaPlayerElement.MediaPlayer.Position;
 
@@ -449,7 +455,7 @@ namespace Kith
                     tfile.Save();
                 }
 
-                if (isCurrentlySelected)
+                if (isCurrentlyPlaying)
                 {
                     await LoadAndPlaySong(songInstanceToUpdate, lastPlayedPosition);
                 }
@@ -1294,6 +1300,34 @@ namespace Kith
             var current = element.RequestedTheme;
             element.RequestedTheme = current == ElementTheme.Light ? ElementTheme.Dark : ElementTheme.Light;
             element.RequestedTheme = ElementTheme.Default;
+        }
+
+        private async void downloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            string url = downloader.Text;
+            downloader.Text = "";
+
+            downloadProgressRing.IsActive = true;
+            downloadProgressRing.IsIndeterminate = true;
+
+            var progress = new Progress<double>(p =>
+            {
+                if (downloadProgressRing.IsIndeterminate)
+                {
+                    downloadProgressRing.IsIndeterminate = false;
+                }
+
+                downloadProgressRing.Value = p * 100;
+            });
+
+            await Downloader.Download(url, progress);
+
+            downloadProgressRing.Value = 0;
+            downloadProgressRing.IsActive = false;
+
+            RefreshSongs();
+            CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
+            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
     }
 }
