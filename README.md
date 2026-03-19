@@ -26,6 +26,7 @@
 ## Roadmap
 - quality of life changes (search bars, sorting etc)
 - Full screen mode with dynamic animations based on the album cover art
+- built in mp3 downloader (from youtube probably)
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
 
 
