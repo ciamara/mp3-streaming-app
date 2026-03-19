@@ -24,6 +24,7 @@ using Windows.Storage.Pickers;
 using static System.Net.Mime.MediaTypeNames;
 using Window = Microsoft.UI.Xaml.Window;
 using Windows.UI;
+using Xamarin.Essentials;
 
 
 namespace Kith
@@ -54,8 +55,8 @@ namespace Kith
 
         private bool shuffleEnabled { get; set; }
 
-        bool queueVisible { get; set; } = false;
-        bool tagEditorVisible { get; set; } = true;
+        //bool queueVisible { get; set; } = false;
+        //bool tagEditorVisible { get; set; } = true;
 
         //private Queue queue { get; set; } = new Queue();
 
@@ -551,10 +552,19 @@ namespace Kith
             LayoutRoot.Visibility = Visibility.Collapsed;
             AudioVisualizerMode.Visibility = Visibility.Visible;
 
+            ExtendsContentIntoTitleBar = false;
+
             // link media player
             if (mediaPlayerElement.MediaPlayer != null)
             {
                 visualizerMediaPlayerElement.SetMediaPlayer(mediaPlayerElement.MediaPlayer);
+            }
+
+            if ((OverlappedPresenter)AppWindow.Presenter != null)
+            {
+                ((OverlappedPresenter)AppWindow.Presenter).IsResizable = false;
+                ((OverlappedPresenter)AppWindow.Presenter).IsMaximizable = false;
+                ((OverlappedPresenter)AppWindow.Presenter).IsMinimizable = false;
             }
 
             if (AppWindow != null)
@@ -1210,6 +1220,9 @@ namespace Kith
             LayoutRoot.Visibility = Visibility.Visible;
 
             AppWindow.SetPresenter(AppWindowPresenterKind.Default);
+
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(TitleBarContainer);
         }
 
         private async Task UpdateVisualizerThemeAsync(Song song)

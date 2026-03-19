@@ -23,21 +23,6 @@
               Background="{StaticResource WindowBackgroundBrush}" 
               Visibility="Collapsed">
 
-            <!--<Grid.ColumnDefinitions>
-                <ColumnDefinition Width="40"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="40"/>
-            </Grid.ColumnDefinitions>
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="100"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="3*"/>
-                <RowDefinition Height="2*"/>
-                <RowDefinition Height="4*"/>
-                <RowDefinition Height="40"/>
-            </Grid.RowDefinitions>-->
-
             <Grid.Resources>
                 <converters:IPictureImageConverter x:Key="IPictureImageConverter"/>
                 <converters:StringJoinConverter x:Key="StringJoinConverter"/>
@@ -46,102 +31,129 @@
             <Canvas x:Name="VisualizerDrawingCanvas" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
 
             <Rectangle x:Name="VisualizerGradient"
-                   Height="864"
-                   Width="1536"
                    Margin="0,0,0,0"
-                   VerticalAlignment="Bottom"
+                   VerticalAlignment="Stretch"
+                   HorizontalAlignment="Stretch"
                    Stroke="Transparent" 
                    Fill="{ThemeResource ColorDownGradientBrush}"/>
 
-            <Image HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   Source="{Binding PlayingSong.Pictures, Converter={StaticResource IPictureImageConverter}}"
-                   Width="300"
-                   Height="300"
-                   Margin="0,0,0,140"
-                   IsHitTestVisible="True"/>
+            <Grid x:Name="AudioVisualizerModeElements">
 
-            <TextBlock VerticalAlignment="Center"
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="4*"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="4*"/>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="2*"/>
+                </Grid.RowDefinitions>
+                
+                <Image Grid.Column="1"
+                       Grid.Row="1"
                        HorizontalAlignment="Center"
-                       Margin="0,250,0,0"
-                       Text="{Binding PlayingSong.Title}"
-                       FontSize="30"
-                       FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                       FontWeight="SemiBold"
-                       Foreground="White"/>
+                       VerticalAlignment="Center"
+                       Source="{Binding PlayingSong.Pictures, Converter={StaticResource IPictureImageConverter}}"
+                       Width="300"
+                       Height="300"
+                       Margin="0,0,0,0"
+                       IsHitTestVisible="True"/>
 
-            <TextBlock VerticalAlignment="Center"
-                       HorizontalAlignment="Center"
-                       Margin="0,340,0,0"
-                       Text="{Binding PlayingSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}"
-                       FontSize="20"
-                       FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
-                       FontWeight="SemiLight"
-                       Foreground="{StaticResource BrokenWhite}"/>
+                <TextBlock Grid.Column="1"
+                           Grid.Row="2"
+                           VerticalAlignment="Top"
+                           HorizontalAlignment="Center"
+                           Margin="0,20,0,0"
+                           Text="{Binding PlayingSong.Title}"
+                           FontSize="30"
+                           FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                           FontWeight="SemiBold"
+                           Foreground="White"/>
 
-            <MediaPlayerElement x:Name="visualizerMediaPlayerElement"
-                                VerticalAlignment="Bottom"
-                                Margin="0,650,0,0"
-                                HorizontalAlignment="Center"
-                                AutoPlay="False" AreTransportControlsEnabled="True"
-                                Background="Transparent">
-                <MediaPlayerElement.TransportControls>
-                    <local:CustomMediaTransportControls x:Name="visualizerTransportControls"
-                                                PreviousTrackClicked="PreviousTrackClicked"
-                                                NextTrackClicked="NextTrackClicked"
-                                                RepeatClicked="RepeatClicked"
-                                                ShuffleClicked="ShuffleClicked"
-                                                IsNextTrackButtonVisible="True"
-                                                IsPreviousTrackButtonVisible="True"
-                                                IsSeekBarVisible="True"
-                                                IsSeekEnabled="True"
-                                                IsCompact="False"
-                                                IsRepeatButtonVisible="True"
-                                                IsRepeatEnabled="True"
-                                                IsZoomButtonVisible="False"
-                                                IsZoomEnabled="False"
-                                                HorizontalAlignment="Stretch"
-                                                Background="Transparent"
-                                                Style="{StaticResource myTransportControlsStyle}" />
+                <TextBlock Grid.Column="1"
+                           Grid.Row="2"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,0"
+                           Text="{Binding PlayingSong.Artists, Converter={StaticResource StringJoinConverter}, ConverterParameter=', '}"
+                           FontSize="20"
+                           FontFamily="ms-appx:///Assets/Fonts/Montserrat-ExtraBold.ttf#Montserrat"
+                           FontWeight="SemiLight"
+                           Foreground="{StaticResource BrokenWhite}"/>
 
-                </MediaPlayerElement.TransportControls>
-            </MediaPlayerElement>
+                <MediaPlayerElement x:Name="visualizerMediaPlayerElement"
+                                    Grid.Row="3"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="4"
+                                    VerticalAlignment="Top"
+                                    Margin="0,0,0,0"
+                                    HorizontalAlignment="Center"
+                                    AutoPlay="False" AreTransportControlsEnabled="True"
+                                    Background="Transparent">
+                    <MediaPlayerElement.TransportControls>
+                        <local:CustomMediaTransportControls x:Name="visualizerTransportControls"
+                                                        PreviousTrackClicked="PreviousTrackClicked"
+                                                        NextTrackClicked="NextTrackClicked"
+                                                        RepeatClicked="RepeatClicked"
+                                                        ShuffleClicked="ShuffleClicked"
+                                                        IsNextTrackButtonVisible="True"
+                                                        IsPreviousTrackButtonVisible="True"
+                                                        IsSeekBarVisible="True"
+                                                        IsSeekEnabled="True"
+                                                        IsCompact="False"
+                                                        IsRepeatButtonVisible="True"
+                                                        IsRepeatEnabled="True"
+                                                        IsZoomButtonVisible="False"
+                                                        IsZoomEnabled="False"
+                                                        HorizontalAlignment="Stretch"
+                                                        Background="Transparent"
+                                                        Style="{StaticResource myTransportControlsStyle}" />
 
-            <StackPanel Orientation="Horizontal" 
-                        VerticalAlignment="Bottom" 
-                        HorizontalAlignment="Right" 
-                        Margin="0,0,40,40" 
-                        Spacing="10">
+                    </MediaPlayerElement.TransportControls>
+                </MediaPlayerElement>
 
-                <Button x:Name="visualizerMuteButton"
-                        Click="MuteButton_Click" 
-                        ClickMode="Release"
-                        Foreground="{StaticResource BrokenWhite}"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Style="{StaticResource volumebuttonsstyle}">
-                    <FontIcon x:Name="visualizerVolumeIcon" Glyph="&#xE767;" FontSize="17" />
-                </Button>
+                <StackPanel Orientation="Horizontal" 
+                            Grid.Row="3"
+                            Grid.Column="3"
+                            VerticalAlignment="Bottom" 
+                            HorizontalAlignment="Right" 
+                            Margin="0,0,10,10" 
+                            Spacing="10">
 
-                <Slider x:Name="visualizerVolumeSlider"
-                        Minimum="0"
-                        Maximum="100"
-                        Value="{Binding ElementName=volumeSlider, Path=Value, Mode=TwoWay}"
-                        Width="100"
-                        Margin="0,4,0,0"
-                        ValueChanged="VolumeSlider_ValueChanged"
-                        Style="{StaticResource SliderStyle}"/>
+                    <Button x:Name="visualizerMuteButton"
+                            Click="MuteButton_Click" 
+                            ClickMode="Release"
+                            Foreground="{StaticResource BrokenWhite}"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Style="{StaticResource volumebuttonsstyle}">
+                        <FontIcon x:Name="visualizerVolumeIcon" Glyph="&#xE767;" FontSize="17" />
+                    </Button>
 
-                <Button x:Name="ExitButton"
-                        Click="ExitVisualizer_Tapped"
-                        ClickMode="Release"
-                        Foreground="{StaticResource BrokenWhite}"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Style="{StaticResource volumebuttonsstyle}">
-                    <FontIcon x:Name="ExitVisualizerIcon" Glyph="&#xE7F4;" FontSize="17" />
-                </Button>
-            </StackPanel>
+                    <Slider x:Name="visualizerVolumeSlider"
+                            Minimum="0"
+                            Maximum="100"
+                            Value="{Binding ElementName=volumeSlider, Path=Value, Mode=TwoWay}"
+                            Width="100"
+                            Margin="0,4,0,0"
+                            ValueChanged="VolumeSlider_ValueChanged"
+                            Style="{StaticResource SliderStyle}"/>
+
+                    <Button x:Name="ExitButton"
+                            Click="ExitVisualizer_Tapped"
+                            ClickMode="Release"
+                            Foreground="{StaticResource BrokenWhite}"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Style="{StaticResource volumebuttonsstyle}">
+                        <FontIcon x:Name="ExitVisualizerIcon" Glyph="&#xE7F4;" FontSize="17" />
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Grid>
 
         <Grid x:Name="LayoutRoot" Background="{StaticResource WindowBackgroundBrush}">
