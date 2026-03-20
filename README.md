@@ -10,6 +10,8 @@
 - Modern Audio Controls with a true random shuffle (not like spotify) : Complete transport controls including seek, volume, mute, and shuffle/repeat functionality.
 - Fully functional queue
 - saving application state between sessions
+- built in mp3 downloading from youtube (by url)
+- focus mode with feature color (extracted from album cover)
 
 ## Structure
 - Converters: Custom XAML value converters (DurationConverter, IPictureImageConverter, StringJoinConverter) to handle data formatting.
@@ -25,8 +27,7 @@
 
 ## Roadmap
 - quality of life changes (search bars, sorting etc)
-- Full screen mode with dynamic animations based on the album cover art
-- built in mp3 downloader (from youtube probably)
+- dynamic animations based on the album cover art in focus mode
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
 
 
