@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -9,10 +11,14 @@ namespace Kith.Sources
     {
         private Collection _selectedCollection;
         public ObservableCollection<Collection> AllCollections { get; set; }
+        public ObservableCollection<Collection> playlists { get; set; }
+        public ObservableCollection<Collection> albums { get; set; }
 
         public CollectionsView()
         {
             AllCollections = new ObservableCollection<Collection>();
+            playlists = new ObservableCollection<Collection>();
+            albums = new ObservableCollection<Collection>();
         }
 
         public Collection SelectedCollection

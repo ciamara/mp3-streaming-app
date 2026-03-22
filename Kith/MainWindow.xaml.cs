@@ -366,7 +366,7 @@ namespace Kith
                 ViewModel.SwapCurrentCollectionSelection(currentSongs);
             }
         }
-        public async Task LoadAndPlaySong(Song song, TimeSpan playFrom)
+        public async Task LoadAndPlaySong(Song song, TimeSpan playFrom, bool autoPlay = true)
         {
             if (song == null) return;
 
@@ -388,8 +388,14 @@ namespace Kith
                     {
                         sender.PlaybackSession.Position = playFrom;
                     }
-
-                    sender.Play();
+                    if (autoPlay)
+                    {
+                        sender.Play();
+                    }
+                    else
+                    {
+                        sender.Pause();
+                    }
                 }
 
                 mediaPlayerElement.MediaPlayer.MediaOpened += OnMediaOpened;
@@ -623,6 +629,7 @@ namespace Kith
             Collection n = new Collection();
 
             CollectionViewModel.AllCollections.Add(n);
+            CollectionViewModel.playlists.Add(n);
 
             CollectionViewModel.SelectedCollection = n;
             CurrentCollection = n;
@@ -1075,6 +1082,9 @@ namespace Kith
 
                     foreach (Collection col in CollectionViewModel.AllCollections)
                     {
+                        // mark if album or playlist
+                        string collectionType = col is Album ? "ALBUM" : "COLLECTION";
+                        writetext.Write($"{collectionType};");
 
                         writetext.Write($"{col.collection_name};");
                         writetext.Write($"{col.collection_description};");
@@ -1136,8 +1146,7 @@ namespace Kith
 
                     if (resume != null){
                         lastPlayedPosition = pos;
-                        await LoadAndPlaySong(resume, lastPlayedPosition);
-                        mediaPlayerElement.MediaPlayer.Pause();
+                        await LoadAndPlaySong(resume, lastPlayedPosition, false);
                     }
 
                     // liked songs collection
@@ -1168,17 +1177,28 @@ namespace Kith
 
                     }
 
-                    // playlists
-                    string playlistData;
-                    string[] playlistParsed;
-
-                    playlistData = readtext.ReadLine();
-                    //System.Console.WriteLine($"{playlistData}");
+                    // playlists/albums
+                    string playlistData = readtext.ReadLine();
                     while (playlistData != null)
                     {
-                        playlistParsed = playlistData.Split(';');
+                        string[] playlistParsed = playlistData.Split(';');
+                        if (playlistParsed.Length < 4)
+                        {
+                            playlistData = readtext.ReadLine();
+                            continue;
+                        }
 
-                        string coverFileName = playlistParsed[2].Trim();
+                        // album/playlist
+                        bool isNewFormat = playlistParsed[0] == "ALBUM" || playlistParsed[0] == "COLLECTION";
+
+                        int nameIdx = isNewFormat ? 1 : 0;
+                        int descIdx = isNewFormat ? 2 : 1;
+                        int coverIdx = isNewFormat ? 3 : 2;
+                        int songsStartIdx = isNewFormat ? 4 : 3;
+
+                        string type = isNewFormat ? playlistParsed[0] : "COLLECTION";
+
+                        string coverFileName = playlistParsed[coverIdx].Trim();
                         string fullCoverPath = coverFileName;
 
                         if (!string.IsNullOrEmpty(coverFileName) && !coverFileName.StartsWith("ms-appdata:///local/"))
@@ -1186,22 +1206,37 @@ namespace Kith
                             fullCoverPath = "ms-appdata:///local/" + coverFileName;
                         }
 
-                        Collection newCol = new Collection(playlistParsed[0], playlistParsed[1], fullCoverPath, true);
-
-                        CollectionViewModel.AllCollections.Add(newCol);
-
-                        size = playlistParsed.Count();
-                        for (int i = 3; i <= (size - 2); i++)
+                        List<Song> loadedSongs = new List<Song>();
+                        for (int i = songsStartIdx; i < playlistParsed.Length - 1; i++)
                         {
-                            Song s = Songs.Find(x => x.FileName == playlistParsed[i]);
-
-                            newCol.Add(s);
-
+                            if (!string.IsNullOrWhiteSpace(playlistParsed[i]))
+                            {
+                                Song s = Songs.Find(x => x.FileName == playlistParsed[i]);
+                                if (s != null) loadedSongs.Add(s);
+                            }
                         }
+
+                        // album
+                        if (type == "ALBUM" && loadedSongs.Count > 0)
+                        {
+                            Album newAlbum = new Album(loadedSongs);
+                            CollectionViewModel.AllCollections.Add(newAlbum);
+                            CollectionViewModel.albums.Add(newAlbum);
+                        }
+                        // playlist
+                        else
+                        {
+                            Collection newCol = new Collection(playlistParsed[nameIdx], playlistParsed[descIdx], fullCoverPath, true);
+                            foreach (Song s in loadedSongs)
+                            {
+                                newCol.Add(s);
+                            }
+                            CollectionViewModel.AllCollections.Add(newCol);
+                            CollectionViewModel.playlists.Add(newCol);
+                        }
+
                         playlistData = readtext.ReadLine();
                     }
-
-
                 }
             }
             catch (Exception ex)
@@ -1401,6 +1436,7 @@ namespace Kith
                         {
                             Album album = new Album(songsForAlbum);
                             CollectionViewModel.AllCollections.Add(album);
+                            CollectionViewModel.albums.Add(album);
 
                             // Console.WriteLine($"Created new album: {targetAlbumName}");
                         }
@@ -1413,6 +1449,85 @@ namespace Kith
             }
 
 
+        }
+
+        private void albumFilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void playlistFilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void ApplyFilters()
+        {
+            bool showAlbums = albumFilterButton.IsChecked == true;
+            bool showPlaylists = playlistFilterButton.IsChecked == true;
+
+            Collection sel_col = CurrentCollection;
+
+            if (showAlbums && showPlaylists)
+            {
+                // show both
+                CollectionsView.ItemsSource = CollectionViewModel.AllCollections;
+
+                CollectionViewModel.SelectedCollection = sel_col;
+                CurrentCollection = sel_col;
+
+                ViewModel.SwapCurrentCollectionSelection(sel_col.collection_songs);
+            }
+            else if (showAlbums && !showPlaylists)
+            {
+                // show albums
+                CollectionsView.ItemsSource = CollectionViewModel.albums;
+
+                if (sel_col.GetType() == typeof(Album))
+                {
+                    CollectionViewModel.SelectedCollection = sel_col;
+                    CurrentCollection = sel_col;
+
+                    ViewModel.SwapCurrentCollectionSelection(sel_col.collection_songs);
+                }
+                else
+                {
+                    CollectionViewModel.SelectedCollection = AllSongsCollection;
+                    CurrentCollection = AllSongsCollection;
+
+                    ViewModel.SwapCurrentCollectionSelection(AllSongsCollection.collection_songs);
+                }
+            }
+            else if (!showAlbums && showPlaylists)
+            {
+                // show playlists
+                CollectionsView.ItemsSource = CollectionViewModel.playlists;
+
+                if (sel_col.GetType() != typeof(Album))
+                {
+                    CollectionViewModel.SelectedCollection = sel_col;
+                    CurrentCollection = sel_col;
+
+                    ViewModel.SwapCurrentCollectionSelection(sel_col.collection_songs);
+                }
+                else
+                {
+                    CollectionViewModel.SelectedCollection = AllSongsCollection;
+                    CurrentCollection = AllSongsCollection;
+
+                    ViewModel.SwapCurrentCollectionSelection(AllSongsCollection.collection_songs);
+                }
+            }
+            else
+            {
+                // show nothing.
+                CollectionsView.ItemsSource = null;
+
+                CollectionViewModel.SelectedCollection = AllSongsCollection;
+                CurrentCollection = AllSongsCollection;
+
+                ViewModel.SwapCurrentCollectionSelection(AllSongsCollection.collection_songs);
+            }
         }
     }
 }

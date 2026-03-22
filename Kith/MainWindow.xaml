@@ -776,11 +776,61 @@
                                   VerticalAlignment="Center"/>
                 </Button>
 
+                <ToggleButton x:Name="playlistFilterButton"
+                              Grid.Row="0"
+                              Click="playlistFilterButton_Click" 
+                              ClickMode="Release"
+                              Margin="60,0,0,0"
+                              Width="90"
+                              Height="25"
+                              Content="playlists"
+                              IsChecked="True"
+                              ToolTipService.ToolTip="filter playlists"
+                              Padding="0"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Stretch"
+                              Opacity="0.9"
+                              Foreground="{StaticResource BrokenWhite}"
+                              BorderBrush="{StaticResource BrokenWhite}"
+                              Background="Transparent">
+                    <ToggleButton.Resources>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#bf8675"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#ca9b8c"/>
+
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#9f4a30"/>
+                    </ToggleButton.Resources>
+                </ToggleButton>
+
+                <ToggleButton x:Name="albumFilterButton"
+                              Grid.Row="0"
+                              Click="albumFilterButton_Click" 
+                              IsChecked="True"
+                              ClickMode="Release"
+                              Margin="0,0,60,0"
+                              Width="90"
+                              Opacity="0.9"
+                              Height="25"
+                              Content="albums"
+                              ToolTipService.ToolTip="filter playlists"
+                              Padding="0"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Stretch"
+                              Foreground="{StaticResource BrokenWhite}"
+                              BorderBrush="{StaticResource BrokenWhite}"
+                              Background="Transparent">
+                    <ToggleButton.Resources>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#bf8675"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#ca9b8c"/>
+
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#9f4a30"/>
+                    </ToggleButton.Resources>
+                </ToggleButton>
+
                 <Button x:Name="groupByAlbumButton"
                         Grid.Row="0"
                         Click="groupByAlbumButton_Click" 
                         ClickMode="Release"
-                        Margin="0,0,20,0"
+                        Margin="0,0,10,0"
                         Width="40"
                         ToolTipService.ToolTip="group by album"
                         Height="40"
