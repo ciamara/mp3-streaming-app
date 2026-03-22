@@ -755,17 +755,24 @@
                     <RowDefinition Height="0.75*" />
                     <RowDefinition Height="7*" />
                 </Grid.RowDefinitions>
+                
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
 
                 <Button x:Name="NewCollectionButton"
                             Grid.Row="0"
+                            Grid.Column="0"
                             Click="NewCollectionButton_Click" 
                             ClickMode="Release"
                             Margin="10,0,0,0"
-                            Width="40"
                             Height="40"
                             ToolTipService.ToolTip="new playlist"
                             Padding="0"
-                            HorizontalAlignment="Left"
+                            HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Foreground="{StaticResource BrokenWhite}"
                             BorderBrush="Transparent"
@@ -778,16 +785,16 @@
 
                 <ToggleButton x:Name="playlistFilterButton"
                               Grid.Row="0"
+                              Grid.Column="1"
                               Click="playlistFilterButton_Click" 
                               ClickMode="Release"
-                              Margin="60,0,0,0"
-                              Width="90"
+                              Margin="10,0,0,0"
                               Height="25"
                               Content="playlists"
                               IsChecked="True"
                               ToolTipService.ToolTip="filter playlists"
                               Padding="0"
-                              HorizontalAlignment="Left"
+                              HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"
                               Opacity="0.9"
                               Foreground="{StaticResource BrokenWhite}"
@@ -796,24 +803,23 @@
                     <ToggleButton.Resources>
                         <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#bf8675"/>
                         <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#ca9b8c"/>
-
                         <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#9f4a30"/>
                     </ToggleButton.Resources>
                 </ToggleButton>
 
                 <ToggleButton x:Name="albumFilterButton"
                               Grid.Row="0"
+                              Grid.Column="2"
                               Click="albumFilterButton_Click" 
                               IsChecked="True"
                               ClickMode="Release"
-                              Margin="0,0,60,0"
-                              Width="90"
+                              Margin="10,0,10,0"
                               Opacity="0.9"
                               Height="25"
                               Content="albums"
                               ToolTipService.ToolTip="filter playlists"
                               Padding="0"
-                              HorizontalAlignment="Right"
+                              HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"
                               Foreground="{StaticResource BrokenWhite}"
                               BorderBrush="{StaticResource BrokenWhite}"
@@ -821,21 +827,20 @@
                     <ToggleButton.Resources>
                         <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#bf8675"/>
                         <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#ca9b8c"/>
-
                         <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#9f4a30"/>
                     </ToggleButton.Resources>
                 </ToggleButton>
 
                 <Button x:Name="groupByAlbumButton"
                         Grid.Row="0"
+                        Grid.Column="3"
                         Click="groupByAlbumButton_Click" 
                         ClickMode="Release"
                         Margin="0,0,10,0"
-                        Width="40"
                         ToolTipService.ToolTip="group by album"
                         Height="40"
                         Padding="0"
-                        HorizontalAlignment="Right"
+                        HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
                         Foreground="{StaticResource BrokenWhite}"
                         BorderBrush="Transparent"
@@ -848,6 +853,7 @@
 
                 <Button x:Name="AllSongsButton"
                             Grid.Row="2"
+                            Grid.ColumnSpan="4"
                             Click="AllSongsButton_Click" 
                             ClickMode="Release"
                             Margin="35,0,35,0"
@@ -872,6 +878,7 @@
 
                 <Button x:Name="LikedSongsButton"
                             Grid.Row="3"
+                            Grid.ColumnSpan="4"
                             Click="LikedSongsButton_Click" 
                             ClickMode="Release"
                             Margin="35,0,35,0"
@@ -895,25 +902,27 @@
                 </Button>
 
                 <Rectangle Grid.Row="4"
-                               Height="0.5" 
-                               VerticalAlignment="Top"
-                               HorizontalAlignment="Stretch"
-                               Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
-                               Margin="25, 4, 45, 0"/>
+                           Grid.ColumnSpan="4"
+                           Height="0.5" 
+                           VerticalAlignment="Top"
+                           HorizontalAlignment="Stretch"
+                           Fill="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                           Margin="25, 4, 45, 0"/>
 
                 <!--ALL COLLECTIONS VIEW -->
                 <ListView x:Name="CollectionsView"
-                      ItemsSource="{Binding AllCollections}"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch"
-                      ItemTemplate="{StaticResource CollectionListViewTemplate}"
-                      SelectionMode="Single"
-                      SelectedItem="{Binding SelectedCollection, Mode=TwoWay}"
-                      SelectionChanged="CollectionsView_SelectionChanged"
-                      ShowsScrollingPlaceholders="True"
-                      Margin="25, 5, 25, 25"
-                      BorderThickness="0"
-                      Grid.Row="4">
+                          ItemsSource="{Binding AllCollections}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          ItemTemplate="{StaticResource CollectionListViewTemplate}"
+                          SelectionMode="Single"
+                          SelectedItem="{Binding SelectedCollection, Mode=TwoWay}"
+                          SelectionChanged="CollectionsView_SelectionChanged"
+                          ShowsScrollingPlaceholders="True"
+                          Margin="25, 5, 25, 25"
+                          BorderThickness="0"
+                          Grid.Row="4"
+                          Grid.ColumnSpan="4">
                 </ListView>
 
             </Grid>
