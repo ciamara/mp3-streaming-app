@@ -185,7 +185,7 @@ namespace Kith.Sources
             }
         }
 
-        private void RecalculateStats()
+        protected void RecalculateStats()
         {
             if (collection_songs.Count > 0)
             {

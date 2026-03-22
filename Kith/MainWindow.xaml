@@ -272,7 +272,7 @@
                                         Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
                                         BorderBrush="Transparent"
                                         Background="Transparent"
-                                        ToolTipService.ToolTip="ListLike">
+                                        ToolTipService.ToolTip="like">
                                 <FontIcon x:Name="LikeIcon" 
                                               Glyph="{Binding liked, Converter={StaticResource BoolToGlyph}}" 
                                               FontSize="13"/>
@@ -285,7 +285,7 @@
                                         Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
                                         BorderBrush="Transparent"
                                         Background="Transparent"
-                                        ToolTipService.ToolTip="add to collection">
+                                        ToolTipService.ToolTip="add to playlist">
                                 <FontIcon x:Name="AddToCollectionIcon" 
                                               Glyph="&#xECC8;" 
                                               FontSize="13"/>
@@ -352,6 +352,7 @@
                                 QuerySubmitted="MainSearch_QuerySubmitted"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
+                                ToolTipService.ToolTip="download by youtube url"
                                 Width="300"
                                 Height="35"
                                 Margin="0,0,0,0" 
@@ -385,6 +386,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Center"
                         Click="downloadButton_Click"
+                        ToolTipService.ToolTip="download"
                         VerticalAlignment="Center"
                         Margin="350,0,0,0" 
                         ClickMode="Release"
@@ -761,6 +763,7 @@
                             Margin="10,0,0,0"
                             Width="40"
                             Height="40"
+                            ToolTipService.ToolTip="new playlist"
                             Padding="0"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Stretch"
@@ -771,6 +774,26 @@
                                   Glyph="&#xECC8;" 
                                   FontSize="17" 
                                   VerticalAlignment="Center"/>
+                </Button>
+
+                <Button x:Name="groupByAlbumButton"
+                        Grid.Row="0"
+                        Click="groupByAlbumButton_Click" 
+                        ClickMode="Release"
+                        Margin="0,0,20,0"
+                        Width="40"
+                        ToolTipService.ToolTip="group by album"
+                        Height="40"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Stretch"
+                        Foreground="{StaticResource BrokenWhite}"
+                        BorderBrush="Transparent"
+                        Background="Transparent">
+                    <FontIcon x:Name="AlbumIcon" 
+                              Glyph="&#xE93C;" 
+                              FontSize="17" 
+                              VerticalAlignment="Center"/>
                 </Button>
 
                 <Button x:Name="AllSongsButton"
@@ -891,6 +914,7 @@
                                 Foreground="{StaticResource BrokenWhite}"
                                 Background="Transparent"
                                 BorderBrush="Transparent"
+                                ToolTipService.ToolTip="queue"
                                 Style="{StaticResource volumebuttonsstyle}">
                         <FontIcon x:Name="QueueIcon" Glyph="&#xE71D;" FontSize="17"/>
                     </Button>
@@ -899,6 +923,7 @@
                                 Click="MuteButton_Click" 
                                 ClickMode="Release"
                                 Foreground="{StaticResource BrokenWhite}"
+                                ToolTipService.ToolTip="mute"
                                 Background="Transparent"
                                 BorderBrush="Transparent"
                                 Style="{StaticResource volumebuttonsstyle}">
@@ -919,6 +944,7 @@
                                 ClickMode="Release"
                                 Foreground="{StaticResource BrokenWhite}"
                                 Background="Transparent"
+                                ToolTipService.ToolTip="focus mode"
                                 BorderBrush="Transparent"
                                 Style="{StaticResource volumebuttonsstyle}">
                         <FontIcon x:Name="FullScreenIcon" Glyph="&#xE7F4;" FontSize="17" />

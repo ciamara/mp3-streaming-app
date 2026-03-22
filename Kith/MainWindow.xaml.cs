@@ -224,7 +224,7 @@ namespace Kith
 
             UpdateFile(songToUpdate);
 
-            RefreshSongs();
+            //RefreshSongs();
             ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
         private void MainSearch_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -344,7 +344,7 @@ namespace Kith
 
             if (selectedSongBeforeUpdate != null)
             {
-                await LoadAndPlaySong(selectedSongBeforeUpdate, TimeSpan.Zero);
+                await LoadAndPlaySong(selectedSongBeforeUpdate, lastPlayedPosition);
             }
         }
 
@@ -380,13 +380,24 @@ namespace Kith
 
                 Windows.Media.Core.MediaSource mediaSource = Windows.Media.Core.MediaSource.CreateFromStorageFile(file);
 
-                mediaPlayerElement.MediaPlayer.Source = mediaSource;
+                void OnMediaOpened(Windows.Media.Playback.MediaPlayer sender, object args)
+                {
+                    sender.MediaOpened -= OnMediaOpened;
 
-                mediaPlayerElement.MediaPlayer.Position = playFrom;
-                mediaPlayerElement.MediaPlayer.Play();
+                    if (playFrom != TimeSpan.Zero)
+                    {
+                        sender.PlaybackSession.Position = playFrom;
+                    }
+
+                    sender.Play();
+                }
+
+                mediaPlayerElement.MediaPlayer.MediaOpened += OnMediaOpened;
+                mediaPlayerElement.MediaPlayer.Source = mediaSource;
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Playback Error: {ex.Message}");
             }
         }
 
@@ -443,23 +454,38 @@ namespace Kith
                 MimeType = imageFile.ContentType
             };
 
-            Song songInstanceToUpdate = ViewModel.AllSongs.FirstOrDefault(s => s.FileName == song.FileName);
+            var allInstancesOfSong = Songs.Where(s => s.FileName == song.FileName).ToList();
+            if (CollectionViewModel?.AllCollections != null)
+            {
+                foreach (var collection in CollectionViewModel.AllCollections)
+                {
+                    allInstancesOfSong.AddRange(collection.collection_songs.Where(s => s.FileName == song.FileName));
+                }
+            }
+            allInstancesOfSong.Add(song);
 
-            if (songInstanceToUpdate != null)
+            bool fileSaved = false;
+            foreach (var songInstanceToUpdate in allInstancesOfSong.Distinct())
             {
                 songInstanceToUpdate.Pictures = new TagLib.IPicture[] { newPicture };
 
-                using (TagLib.File tfile = TagLib.File.Create(songInstanceToUpdate.FileName))
+                if (!fileSaved)
                 {
-                    tfile.Tag.Pictures = songInstanceToUpdate.Pictures;
-                    tfile.Save();
-                }
-
-                if (isCurrentlyPlaying)
-                {
-                    await LoadAndPlaySong(songInstanceToUpdate, lastPlayedPosition);
+                    using (TagLib.File tfile = TagLib.File.Create(songInstanceToUpdate.FileName))
+                    {
+                        tfile.Tag.Pictures = songInstanceToUpdate.Pictures;
+                        tfile.Save();
+                    }
+                    fileSaved = true;
                 }
             }
+
+            if (isCurrentlyPlaying)
+            {
+                await LoadAndPlaySong(song, lastPlayedPosition);
+            }
+
+            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
         private void AddToQueue(object sender, RoutedEventArgs e)
         {
@@ -1328,6 +1354,65 @@ namespace Kith
             RefreshSongs();
             CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
             ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
+        }
+
+        private void groupByAlbumButton_Click(object sender, RoutedEventArgs e)
+        {
+            Dictionary<string, string> albumMap = new Dictionary<string, string>();
+            String albumSongs;
+
+            foreach (Song s in Songs)
+            {
+                if (albumMap.ContainsKey(s.Album))
+                {
+                    albumMap.TryGetValue(s.Album, out albumSongs);
+                    albumSongs = albumSongs + ";" + s.FileName;
+                    albumMap[$"{s.Album}"] = albumSongs;
+                }
+                else
+                {
+                    albumMap.Add(s.Album, s.FileName);
+                }
+            }
+
+            foreach (KeyValuePair<string, string> entry in albumMap)
+            {
+                //Console.WriteLine($"Album: {entry.Key}, songs: {entry.Value}");
+
+                if (entry.Value.Contains(";"))
+                {
+                    string[] songFileNames = entry.Value.Split(";");
+                    
+                    List<Song> songsForAlbum = Songs.FindAll(song => songFileNames.Contains(song.FileName));
+
+                    if (songsForAlbum.Count > 0)
+                    {
+                        string targetAlbumName = songsForAlbum[0].Album;
+
+                        var existingCollection = CollectionViewModel.AllCollections.FirstOrDefault(c => c.collection_name == targetAlbumName);
+
+                        if (existingCollection != null)
+                        {
+                            existingCollection.collection_songs = songsForAlbum;
+
+                            // Console.WriteLine($"Updated existing album: {targetAlbumName}");
+                        }
+                        else
+                        {
+                            Album album = new Album(songsForAlbum);
+                            CollectionViewModel.AllCollections.Add(album);
+
+                            // Console.WriteLine($"Created new album: {targetAlbumName}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Warning: No matching Song objects found for Album '{entry.Key}'.");
+                    }
+                }
+            }
+
+
         }
     }
 }

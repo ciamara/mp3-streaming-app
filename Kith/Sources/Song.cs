@@ -141,6 +141,17 @@ namespace Kith.Sources
             Pictures = pictures;
         }
 
+        public string stringArtists(string[] artists)
+        {
+            string s_artists = "";
+            foreach(string a in artists)
+            {
+                s_artists += a;
+                s_artists += ", ";
+            }
+            return s_artists[..^2];
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
