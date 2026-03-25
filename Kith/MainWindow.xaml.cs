@@ -1387,6 +1387,7 @@ namespace Kith
             downloadProgressRing.IsActive = false;
 
             RefreshSongs();
+
             CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
             ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
