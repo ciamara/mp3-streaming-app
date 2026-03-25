@@ -40,6 +40,10 @@ Main window with queue tab open
 ![Main Window](md_screens/screen3.png)              
 Main window with example playlists and one playlist open           
 ![Main Window](md_screens/screen4.png)               
+Main window with album grouping open                        
+![Main Window](md_screens/screen5.png)         
+Focus mode open                          
+![Main Window](md_screens/screen6.png)               
 
 
 
