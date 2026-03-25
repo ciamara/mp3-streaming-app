@@ -14,11 +14,14 @@ namespace Kith.Sources
         public ObservableCollection<Collection> playlists { get; set; }
         public ObservableCollection<Collection> albums { get; set; }
 
+        public ObservableCollection<Collection> filtered { get; set; }
+
         public CollectionsView()
         {
             AllCollections = new ObservableCollection<Collection>();
             playlists = new ObservableCollection<Collection>();
             albums = new ObservableCollection<Collection>();
+            filtered = new ObservableCollection<Collection>();
         }
 
         public Collection SelectedCollection

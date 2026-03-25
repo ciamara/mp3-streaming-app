@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -21,10 +22,10 @@ using Windows.Media.Playback;
 using Windows.Services.Maps;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using static System.Net.Mime.MediaTypeNames;
-using Window = Microsoft.UI.Xaml.Window;
 using Windows.UI;
 using Xamarin.Essentials;
+using static System.Net.Mime.MediaTypeNames;
+using Window = Microsoft.UI.Xaml.Window;
 
 
 namespace Kith
@@ -1529,6 +1530,30 @@ namespace Kith
 
                 ViewModel.SwapCurrentCollectionSelection(AllSongsCollection.collection_songs);
             }
+        }
+
+        private void filterCollections(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+            string filter = CollectionFilter.Text;
+            //Console.WriteLine($"filter: {filter}");
+
+            var filtered = CollectionViewModel.AllCollections.Where(c => c.collection_name.Contains(filter, StringComparison.OrdinalIgnoreCase) || c.collection_description.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+            CollectionViewModel.filtered = new ObservableCollection<Collection>(filtered);
+
+            CollectionsView.ItemsSource = CollectionViewModel.filtered;
+        }
+
+        private void filterSongs(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+            string filter = SongFilter.Text;
+            //Console.WriteLine($"filter: {filter}");
+
+            var filtered = ViewModel.CurrentCollectionSongs.Where(s => s.Title.Contains(filter, StringComparison.OrdinalIgnoreCase) || s.Artists[0].Contains(filter, StringComparison.OrdinalIgnoreCase) || s.Album.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+            ViewModel.filtered = new ObservableCollection<Song>(filtered);
+
+            SongsView.ItemsSource = ViewModel.filtered;
         }
     }
 }

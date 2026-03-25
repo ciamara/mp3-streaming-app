@@ -14,6 +14,8 @@ namespace Kith.Sources
 
         public ObservableCollection<Song> AllSongs { get; set; }
 
+        public ObservableCollection<Song> filtered { get; set; }
+
         public ObservableCollection<Song> CurrentCollectionSongs { get; set; }
 
         public Queue SongQueue { get; set; }
