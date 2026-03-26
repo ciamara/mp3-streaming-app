@@ -10,8 +10,6 @@
 - Modern Audio Controls with a true random shuffle (not like spotify) : Complete transport controls including seek, volume, mute, and shuffle/repeat functionality.
 - Fully functional queue
 - saving application state between sessions
-- built in mp3 downloading from youtube (by url)
-- focus mode with feature color (extracted from album cover)
 
 ## Structure
 - Converters: Custom XAML value converters (DurationConverter, IPictureImageConverter, StringJoinConverter) to handle data formatting.
@@ -26,8 +24,8 @@
 - Platform: Windows 10/11 (Desktop)
 
 ## Roadmap
-- quality of life changes (search bars, sorting etc)
-- dynamic animations based on the album cover art in focus mode
+- song history for being able to skip back
+- add dynamic animations based on the album cover art to focus mode
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
 
 
@@ -39,9 +37,11 @@ Main window with liked songs collection open
 Main window with queue tab open               
 ![Main Window](md_screens/screen3.png)              
 Main window with example playlists and one playlist open           
-![Main Window](md_screens/screen4.png)               
+![Main Window](md_screens/screen4.png)        
 Main window with album grouping open                        
-![Main Window](md_screens/screen5.png)         
+![Main Window](md_screens/screen5.png)       
+Main window with song search bar used                        
+![Main Window](md_screens/screen7.png)             
 Focus mode open                          
 ![Main Window](md_screens/screen6.png)               
 
