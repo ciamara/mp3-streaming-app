@@ -24,8 +24,8 @@
 - Platform: Windows 10/11 (Desktop)
 
 ## Roadmap
-- quality of life changes (search bars, sorting etc)
-- Full screen mode with dynamic animations based on the album cover art
+- song history for being able to skip back
+- add dynamic animations based on the album cover art to focus mode
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
 
 
