@@ -352,20 +352,23 @@
                                 QuerySubmitted="MainSearch_QuerySubmitted"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
+                                VerticalContentAlignment="Center"
                                 ToolTipService.ToolTip="download by youtube url"
                                 Width="300"
                                 Height="35"
                                 Margin="0,0,0,0" 
-                                CornerRadius="22"
-                                Background="{StaticResource BrokenBlack}"
+                                CornerRadius="16"
+                                Background="#341e16"
                                 Foreground="{ThemeResource ButtonForegroundBrush}"
-                                BorderBrush="{StaticResource BrokenBlack}"
+                                BorderBrush="#341e16"
                                 Grid.Column="1">
                         <AutoSuggestBox.Resources>
-                            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
-                            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
+                            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#40251b"/>
+                            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#40251b"/>
                             <SolidColorBrush x:Key="TextControlBackgroundGotFocus" Color="{StaticResource FoxyDark}"/>
-                        </AutoSuggestBox.Resources>
+                            <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#4d2a1d"/>
+                            <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#4d2a1d"/>
+                    </AutoSuggestBox.Resources>
                 </AutoSuggestBox>
 
                 <ProgressRing x:Name="downloadProgressRing"
@@ -545,13 +548,51 @@
                         <RowDefinition Height="1*" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
                         <ColumnDefinition Width="1*" />
                     </Grid.ColumnDefinitions>
 
+                    <StackPanel Orientation="Horizontal" 
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="40,0,0,5"
+                                Spacing="10">
+
+                        <Button x:Name="CollectionPlayPauseButton"
+                                      Margin="0,0,0,0"
+                                      Height="40"
+                                      Width="40"
+                                      HorizontalAlignment="Left"
+                                      Click="CollectionPlayPauseButton_Click"
+                                      VerticalAlignment="Center"
+                                      Padding="0,0,0,0"
+                                      VerticalContentAlignment="Center"
+                                      Background="Transparent"
+                                      BorderBrush="Transparent">
+                            <FontIcon x:Name="CollectionPlayPause" Glyph="&#xF5B0;" FontSize="25" />
+                        </Button>
+
+                        <Button x:Name="CollectionShuffleButton"
+                                Margin="0,0,0,0"
+                                Height="40"
+                                Width="40"
+                                HorizontalAlignment="Left"
+                                Click="CollectionShuffleButton_Click"
+                                VerticalAlignment="Center"
+                                Padding="0,0,0,0"
+                                VerticalContentAlignment="Center"
+                                Background="Transparent"
+                                BorderBrush="Transparent">
+                            <FontIcon x:Name="CollectionSuhffle" Glyph="&#xE8B1;" FontSize="25" />
+                        </Button>
+
+                    </StackPanel>
+                    
+
                     <AutoSuggestBox x:Name="SongFilter"
                                     Grid.Row="1"
-                                    Grid.Column="1"
+                                    Grid.Column="2"
                                     Margin="0,0,20,5"
                                     TextChanged="filterSongs"
                                     FontSize="12"
@@ -563,14 +604,16 @@
                                     Padding="10,0,10,0"
                                     ToolTipService.ToolTip="find song"
                                     CornerRadius="13"
-                                    Background="{StaticResource LighterBrokenBlack}"
+                                    Background="#341e16"
                                     Foreground="{ThemeResource ButtonForegroundBrush}"
-                                    BorderBrush="{StaticResource LighterBrokenBlack}">
-                                    <AutoSuggestBox.Resources>
+                                    BorderBrush="#341e16">
+                        <AutoSuggestBox.Resources>
                             <x:Double x:Key="TextControlThemeMinHeight">25</x:Double>
-                            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
-                            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
+                            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#40251b"/>
+                            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#40251b"/>
                             <SolidColorBrush x:Key="TextControlBackgroundGotFocus" Color="{StaticResource FoxyDark}"/>
+                            <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#4d2a1d"/>
+                            <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#4d2a1d"/>
                         </AutoSuggestBox.Resources>
                     </AutoSuggestBox>
                 </Grid>
@@ -829,50 +872,64 @@
                 </Button>
 
                 <ToggleButton x:Name="playlistFilterButton"
-                  Grid.Row="0"
-                  Grid.Column="2"
-                  Click="playlistFilterButton_Click" 
-                  ClickMode="Release"
-                  Margin="20,10,0,10"
-                  Height="25"
-                  Content="playlists"
-                  IsChecked="True"
-                  ToolTipService.ToolTip="filter playlists"
-                  Padding="0"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch"
-                  Opacity="0.9"
-                  Foreground="{StaticResource BrokenWhite}"
-                  BorderBrush="{StaticResource BrokenWhite}"
-                  Background="Transparent">
+                              Grid.Row="0"
+                              Grid.Column="2"
+                              Click="playlistFilterButton_Click" 
+                              ClickMode="Release"
+                              Margin="20,10,0,10"
+                              Height="25"
+                              Content="playlists"
+                              IsChecked="True"
+                              ToolTipService.ToolTip="filter playlists"
+                              Padding="0"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              VerticalContentAlignment="Center"
+                              Opacity="0.9"
+                              Foreground="{StaticResource BrokenWhite}"
+                              BorderBrush="{StaticResource BrokenWhite}"
+                              Background="Transparent"
+                              FontSize="13">
                     <ToggleButton.Resources>
-                        <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#bf8675"/>
-                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#ca9b8c"/>
-                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#9f4a30"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#762f19"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="#301d16"/>
+                        <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="#301d16"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#762f19"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#762f19"/>
+                        <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="#762f19"/>
+                        <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource BrokenWhite}"/>
+                        <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="White"/>
                     </ToggleButton.Resources>
                 </ToggleButton>
 
                 <ToggleButton x:Name="albumFilterButton"
-                  Grid.Row="0"
-                  Grid.Column="3"
-                  Click="albumFilterButton_Click" 
-                  IsChecked="True"
-                  ClickMode="Release"
-                  Margin="5,10,20,10"
-                  Opacity="0.9"
-                  Height="25"
-                  Content="albums"
-                  ToolTipService.ToolTip="filter playlists"
-                  Padding="0"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch"
-                  Foreground="{StaticResource BrokenWhite}"
-                  BorderBrush="{StaticResource BrokenWhite}"
-                  Background="Transparent">
+                              Grid.Row="0"
+                              Grid.Column="3"
+                              Click="albumFilterButton_Click" 
+                              IsChecked="True"
+                              ClickMode="Release"
+                              Margin="5,10,20,10"
+                              Opacity="0.9"
+                              Height="25"
+                              Content="albums"
+                              ToolTipService.ToolTip="filter playlists"
+                              Padding="0"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              VerticalContentAlignment="Center"
+                              Foreground="{StaticResource BrokenWhite}"
+                              BorderBrush="{StaticResource BrokenWhite}"
+                              Background="Transparent"
+                              FontSize="13">
                     <ToggleButton.Resources>
-                        <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#bf8675"/>
-                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#ca9b8c"/>
-                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#9f4a30"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#762f19"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="#301d16"/>
+                        <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="#301d16"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#762f19"/>
+                        <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#762f19"/>
+                        <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="#762f19"/>
+                        <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource BrokenWhite}"/>
+                        <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="White"/>
                     </ToggleButton.Resources>
                 </ToggleButton>
 
@@ -890,14 +947,16 @@
                     Margin="25,5,25,10"
                     ToolTipService.ToolTip="find collection"
                     CornerRadius="15"
-                    Background="{StaticResource BrokenBlack}"
+                    Background="#341e16"
                     Foreground="{ThemeResource ButtonForegroundBrush}"
-                    BorderBrush="{StaticResource BrokenBlack}">
+                    BorderBrush="#341e16">
                     <AutoSuggestBox.Resources>
                         <x:Double x:Key="TextControlThemeMinHeight">20</x:Double>
-                        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
-                        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource LighterBrokenBlack}"/>
+                        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#40251b"/>
+                        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#40251b"/>
                         <SolidColorBrush x:Key="TextControlBackgroundGotFocus" Color="{StaticResource FoxyDark}"/>
+                        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#4d2a1d"/>
+                        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#4d2a1d"/>
                     </AutoSuggestBox.Resources>
                 </AutoSuggestBox>
 
@@ -1078,6 +1137,20 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
+
+                <Button x:Name="QueueClearButton"
+                        Margin="0,0,20,10"
+                        Height="40"
+                        Width="40"
+                        HorizontalAlignment="Right"
+                        Click="QueueClearButton_Click"
+                        VerticalAlignment="Center"
+                        Padding="0,0,0,0"
+                        VerticalContentAlignment="Center"
+                        Background="Transparent"
+                        BorderBrush="Transparent">
+                    <FontIcon x:Name="BinIcon" Glyph="&#xE74D;" FontSize="17" />
+                </Button>
 
                 <TextBlock Grid.Row="0" 
                                    Text="Queue" 

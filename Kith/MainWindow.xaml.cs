@@ -1535,13 +1535,24 @@ namespace Kith
         private void filterCollections(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
         {
             string filter = CollectionFilter.Text;
-            //Console.WriteLine($"filter: {filter}");
 
             var filtered = CollectionViewModel.AllCollections.Where(c => c.collection_name.Contains(filter, StringComparison.OrdinalIgnoreCase) || c.collection_description.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+            var currentSelection = CollectionViewModel.SelectedCollection;
 
             CollectionViewModel.filtered = new ObservableCollection<Collection>(filtered);
 
             CollectionsView.ItemsSource = CollectionViewModel.filtered;
+
+            if (currentSelection != null && CollectionViewModel.filtered.Contains(currentSelection))
+            {
+                CollectionsView.SelectedItem = currentSelection;
+                CollectionViewModel.SelectedCollection = currentSelection;
+            }
+            else if (CollectionViewModel.filtered.Count > 0)
+            {
+                CollectionsView.SelectedItem = CollectionViewModel.filtered[0];
+            }
         }
 
         private void filterSongs(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -1554,6 +1565,40 @@ namespace Kith
             ViewModel.filtered = new ObservableCollection<Song>(filtered);
 
             SongsView.ItemsSource = ViewModel.filtered;
+        }
+
+        private void CollectionShuffleButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SongQueue.Clear();
+
+            List<Song> col_songs = ViewModel.CurrentCollectionSongs.ToList<Song>();
+
+            while(col_songs.Count() != 0)
+            {
+                Random rnd = new Random();
+                int rand = rnd.Next(0, col_songs.Count);
+                ViewModel.SongQueue.add(col_songs[rand]);
+                col_songs.RemoveAt(rand);
+            }
+            LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+        }
+
+        private void CollectionPlayPauseButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SongQueue.Clear();
+
+            List<Song> col_songs = ViewModel.CurrentCollectionSongs.ToList<Song>();
+
+            for(int i=0;  i<col_songs.Count(); i++)
+            {
+                ViewModel.SongQueue.add(col_songs[i]);
+            }
+            LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+        }
+
+        private void QueueClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SongQueue.Clear();
         }
     }
 }
