@@ -39,7 +39,9 @@ Main window with queue tab open
 Main window with example playlists and one playlist open           
 ![Main Window](md_screens/screen4.png)        
 Main window with album grouping open                        
-![Main Window](md_screens/screen5.png)         
+![Main Window](md_screens/screen5.png)       
+Main window with song search bar used                        
+![Main Window](md_screens/screen7.png)             
 Focus mode open                          
 ![Main Window](md_screens/screen6.png)               
 
