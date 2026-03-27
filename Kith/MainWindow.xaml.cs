@@ -48,6 +48,8 @@ namespace Kith
 
         private Collection LikedSongsCollection { get; set; }
 
+        private Stack<Song> pastSongs { get; set; } = new Stack<Song>();
+
         private double Volume { get; set; }
 
         private bool Muted { get; set; }
@@ -56,18 +58,12 @@ namespace Kith
 
         private bool shuffleEnabled { get; set; }
 
-        //bool queueVisible { get; set; } = false;
-        //bool tagEditorVisible { get; set; } = true;
-
-        //private Queue queue { get; set; } = new Queue();
-
         private SongsView ViewModel { get; set; }
 
         private CollectionsView CollectionViewModel { get; set; }
 
         private Song selectedSongBeforeUpdate;
 
-        private Song previousSong;
         private TimeSpan lastPlayedPosition;
 
         private const int BarCount = 32;
@@ -751,7 +747,8 @@ namespace Kith
 
         private void MediaPlayer_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
         {
-            previousSong = ViewModel.PlayingSong;
+            Console.WriteLine($"media ended: {ViewModel.PlayingSong.Title}");
+            pastSongs.Push(ViewModel.PlayingSong);
 
             if (repeatEnabled)
             {
@@ -850,7 +847,21 @@ namespace Kith
             {
                 if (menu.Tag is Collection collection)
                 {
+                    if (collection.GetType() == typeof(Album))
+                    {
+                        CollectionViewModel.albums.Remove(collection);
+                    }
+                    else
+                    {
+                        CollectionViewModel.playlists.Remove(collection);
+                    }
+                    if (CollectionFilter.Text != "")
+                    {
+                        CollectionViewModel.filtered.Remove(collection);
+                    }
+
                     CollectionViewModel.AllCollections.Remove(collection);
+
 
                     if(CurrentCollection == collection)
                     {
@@ -923,9 +934,9 @@ namespace Kith
                 }
                 else
                 {
-                    if (previousSong != null)
+                    if (pastSongs.Count() != 0)
                     {
-                        LoadAndPlaySong(previousSong, TimeSpan.Zero);
+                        LoadAndPlaySong(pastSongs.Pop(), TimeSpan.Zero);
                     }
                     else
                     {
@@ -941,6 +952,8 @@ namespace Kith
             {
                 if (ViewModel.SongQueue.queue.Count != 0)
                 {
+                    //Console.WriteLine("next from queue");
+                    pastSongs.Push(ViewModel.PlayingSong);
                     LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
                 }
                 else
