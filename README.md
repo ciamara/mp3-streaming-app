@@ -24,8 +24,8 @@
 - Platform: Windows 10/11 (Desktop)
 
 ## Roadmap
-- quality of life changes (search bars, sorting etc)
-- Full screen mode with dynamic animations based on the album cover art
+- song history for being able to skip back
+- add dynamic animations based on the album cover art to focus mode
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
 
 
@@ -39,7 +39,9 @@ Main window with queue tab open
 Main window with example playlists and one playlist open           
 ![Main Window](md_screens/screen4.png)        
 Main window with album grouping open                        
-![Main Window](md_screens/screen5.png)         
+![Main Window](md_screens/screen5.png)       
+Main window with song search bar used                        
+![Main Window](md_screens/screen7.png)             
 Focus mode open                          
 ![Main Window](md_screens/screen6.png)               
 
