@@ -1,31 +1,33 @@
-﻿using Kith.Sources;
+﻿using AudioVisualiser;
+using Kith.Sources;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
-
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using TagLib;
-using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Media.Playback;
-using Windows.Services.Maps;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using static System.Net.Mime.MediaTypeNames;
+using Windows.UI;
 using Window = Microsoft.UI.Xaml.Window;
 
 
 namespace Kith
 {
+    /// <summary>
+    /// Main Window of mp3 player.
+    /// </summary>
     public sealed partial class MainWindow : Window
     {
 
@@ -41,6 +43,8 @@ namespace Kith
 
         private Collection LikedSongsCollection { get; set; }
 
+        private Stack<Song> pastSongs { get; set; } = new Stack<Song>();
+
         private double Volume { get; set; }
 
         private bool Muted { get; set; }
@@ -49,28 +53,46 @@ namespace Kith
 
         private bool shuffleEnabled { get; set; }
 
-        bool queueVisible { get; set; } = false;
-        bool tagEditorVisible { get; set; } = true;
-
-        //private Queue queue { get; set; } = new Queue();
-
         private SongsView ViewModel { get; set; }
 
         private CollectionsView CollectionViewModel { get; set; }
 
         private Song selectedSongBeforeUpdate;
-        private Song previousSong;
+
         private TimeSpan lastPlayedPosition;
+
+        private const int BarCount = 32;
+        private float[] lastFrameBars = new float[BarCount];
+
+        public ObservableCollection<AudioBar> AudioBars { get; set; }
+
+        private AudioHelper _audioHelper;
+        private DispatcherTimer _visualizerTimer;
 
         public MainWindow()
         {
             this.InitializeComponent();
+
+            // initializing audio bars
+            AudioBars = new ObservableCollection<AudioBar>();
+            for (int i = 0; i < BarCount; i++)
+            {
+                AudioBars.Add(new AudioBar { Height = 10 }); // min height
+            }
+
+            _audioHelper = new AudioHelper();
+
+            _visualizerTimer = new DispatcherTimer();
+            _visualizerTimer.Interval = TimeSpan.FromMilliseconds(30);
+            _visualizerTimer.Tick += VisualizerTimer_Tick;
+            _visualizerTimer.Start();
 
             mediaPlayerElement.MediaPlayer.MediaEnded += MediaPlayer_MediaEnded;
 
             CollectionViewModel = new CollectionsView();
             ViewModel = new SongsView();
             LayoutRoot.DataContext = ViewModel;
+            AudioVisualizerMode.DataContext = ViewModel;
             leftSection.DataContext = CollectionViewModel;
             collectionInfo.DataContext = CollectionViewModel;
             FlyoutCollectionsList.DataContext = CollectionViewModel;
@@ -143,9 +165,22 @@ namespace Kith
         }
         private void MainWindow_SizeChanged(object sender, WindowSizeChangedEventArgs e)
         {
-            OverlappedPresenter presenter = (OverlappedPresenter)AppWindow.Presenter;
-            MaximizeRestoreBtn.Icon = presenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
+            //OverlappedPresenter presenter = (OverlappedPresenter)AppWindow.Presenter;
+            //MaximizeRestoreBtn.Icon = presenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
+
+            if (AppWindow.Presenter is OverlappedPresenter overlappedPresenter)
+            {
+                if (overlappedPresenter.State == OverlappedPresenterState.Maximized)
+                {
+                    MaximizeRestoreBtn.Icon = overlappedPresenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
+                }
+                else
+                {
+                    MaximizeRestoreBtn.Icon = overlappedPresenter.State == OverlappedPresenterState.Maximized ? new SymbolIcon { Symbol = Symbol.BackToWindow } : new SymbolIcon { Symbol = Symbol.FullScreen };
+                }
+            }
         }
+
         private void MinimizeBtn_Click(object sender, RoutedEventArgs e)
         {
             OverlappedPresenter presenter = (OverlappedPresenter)AppWindow.Presenter;
@@ -201,7 +236,7 @@ namespace Kith
 
             UpdateFile(songToUpdate);
 
-            RefreshSongs();
+            //RefreshSongs();
             ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
         private void MainSearch_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -247,7 +282,12 @@ namespace Kith
                         using (TagLib.File tfile = TagLib.File.Create(song_file))
                         {
                             string currentTitle = tfile.Tag.Title ?? Path.GetFileNameWithoutExtension(song_file);
-                            string[] currentArtists = tfile.Tag.Artists ?? Array.Empty<string>();
+                            //string[] currentArtists = tfile.Tag.Artists ?? Array.Empty<string>();
+
+                            string[] currentArtists = (tfile.Tag.Artists != null && tfile.Tag.Artists.Length > 0)
+                                    ? tfile.Tag.Artists
+                                    : new string[] { "Unknown Artist" };
+
                             string currentAlbum = tfile.Tag.Album ?? "Unknown Album";
                             uint currentYear = tfile.Tag.Year;
                             uint currentTrack = tfile.Tag.Track;
@@ -316,7 +356,7 @@ namespace Kith
 
             if (selectedSongBeforeUpdate != null)
             {
-                await LoadAndPlaySong(selectedSongBeforeUpdate, TimeSpan.Zero);
+                await LoadAndPlaySong(selectedSongBeforeUpdate, lastPlayedPosition);
             }
         }
 
@@ -338,25 +378,46 @@ namespace Kith
                 ViewModel.SwapCurrentCollectionSelection(currentSongs);
             }
         }
-        public async Task LoadAndPlaySong(Song song, TimeSpan playFrom)
+        public async Task LoadAndPlaySong(Song song, TimeSpan playFrom, bool autoPlay = true)
         {
             if (song == null) return;
+
+            _ = UpdateVisualizerThemeAsync(song);
 
             try
             {
                 ViewModel.PlayingSong = song;
 
+                _audioHelper.Load(song.FileName);
+
                 Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(song.FileName);
 
                 Windows.Media.Core.MediaSource mediaSource = Windows.Media.Core.MediaSource.CreateFromStorageFile(file);
 
-                mediaPlayerElement.MediaPlayer.Source = mediaSource;
+                void OnMediaOpened(Windows.Media.Playback.MediaPlayer sender, object args)
+                {
+                    sender.MediaOpened -= OnMediaOpened;
 
-                mediaPlayerElement.MediaPlayer.Position = playFrom;
-                mediaPlayerElement.MediaPlayer.Play();
+                    if (playFrom != TimeSpan.Zero)
+                    {
+                        sender.PlaybackSession.Position = playFrom;
+                    }
+                    if (autoPlay)
+                    {
+                        sender.Play();
+                    }
+                    else
+                    {
+                        sender.Pause();
+                    }
+                }
+
+                mediaPlayerElement.MediaPlayer.MediaOpened += OnMediaOpened;
+                mediaPlayerElement.MediaPlayer.Source = mediaSource;
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Playback Error: {ex.Message}");
             }
         }
 
@@ -364,7 +425,7 @@ namespace Kith
         {
             e.Handled = true;
 
-            if (ViewModel.SelectedSong == null)
+            if (ViewModel.PlayingSong == null)
             {
                 //System.Console.WriteLine("No song selected.");
                 return;
@@ -385,15 +446,15 @@ namespace Kith
 
             if (file != null)
             {
-                await UpdateAlbumArt(ViewModel.SelectedSong, file);
+                await UpdateAlbumArt(ViewModel.PlayingSong, file);
             }
         }
         private async Task UpdateAlbumArt(Song song, StorageFile imageFile)
         {
 
-            bool isCurrentlySelected = (ViewModel.SelectedSong?.FileName == song.FileName);
+            bool isCurrentlyPlaying = (ViewModel.PlayingSong?.FileName == song.FileName);
 
-            if (isCurrentlySelected && mediaPlayerElement.MediaPlayer.Source != null)
+            if (isCurrentlyPlaying && mediaPlayerElement.MediaPlayer.Source != null)
             {
                 lastPlayedPosition = mediaPlayerElement.MediaPlayer.Position;
 
@@ -413,23 +474,38 @@ namespace Kith
                 MimeType = imageFile.ContentType
             };
 
-            Song songInstanceToUpdate = ViewModel.AllSongs.FirstOrDefault(s => s.FileName == song.FileName);
+            var allInstancesOfSong = Songs.Where(s => s.FileName == song.FileName).ToList();
+            if (CollectionViewModel?.AllCollections != null)
+            {
+                foreach (var collection in CollectionViewModel.AllCollections)
+                {
+                    allInstancesOfSong.AddRange(collection.collection_songs.Where(s => s.FileName == song.FileName));
+                }
+            }
+            allInstancesOfSong.Add(song);
 
-            if (songInstanceToUpdate != null)
+            bool fileSaved = false;
+            foreach (var songInstanceToUpdate in allInstancesOfSong.Distinct())
             {
                 songInstanceToUpdate.Pictures = new TagLib.IPicture[] { newPicture };
 
-                using (TagLib.File tfile = TagLib.File.Create(songInstanceToUpdate.FileName))
+                if (!fileSaved)
                 {
-                    tfile.Tag.Pictures = songInstanceToUpdate.Pictures;
-                    tfile.Save();
-                }
-
-                if (isCurrentlySelected)
-                {
-                    await LoadAndPlaySong(songInstanceToUpdate, lastPlayedPosition);
+                    using (TagLib.File tfile = TagLib.File.Create(songInstanceToUpdate.FileName))
+                    {
+                        tfile.Tag.Pictures = songInstanceToUpdate.Pictures;
+                        tfile.Save();
+                    }
+                    fileSaved = true;
                 }
             }
+
+            if (isCurrentlyPlaying)
+            {
+                await LoadAndPlaySong(song, lastPlayedPosition);
+            }
+
+            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
         private void AddToQueue(object sender, RoutedEventArgs e)
         {
@@ -447,17 +523,30 @@ namespace Kith
             if (mediaPlayerElement != null && mediaPlayerElement.MediaPlayer != null)
             {
                 Volume = e.NewValue / 100.0;
-                if (Volume != 0)
+                mediaPlayerElement.MediaPlayer.Volume = Volume;
+
+                string targetGlyph;
+
+                if (Volume > 0)
                 {
                     Muted = false;
-                    VolumeIcon.Glyph = "\uE767";
+                    targetGlyph = "\uE767";
                 }
-                if (Volume == 0)
+                else
                 {
                     Muted = true;
-                    VolumeIcon.Glyph = "\uE74F";
+                    targetGlyph = "\uE74F";
                 }
-                mediaPlayerElement.MediaPlayer.Volume = Volume;
+
+                if (VolumeIcon != null)
+                {
+                    VolumeIcon.Glyph = targetGlyph;
+                }
+
+                if (visualizerVolumeIcon != null)
+                {
+                    visualizerVolumeIcon.Glyph = targetGlyph;
+                }
             }
         }
 
@@ -465,18 +554,32 @@ namespace Kith
         {
             if (mediaPlayerElement != null && mediaPlayerElement.MediaPlayer != null)
             {
+                string targetGlyph;
+
                 if (Muted)
                 {
+                    // unmute
                     Muted = false;
                     mediaPlayerElement.MediaPlayer.Volume = Volume;
-                    VolumeIcon.Glyph = "\uE767";
+                    targetGlyph = "\uE767"; // The 'Volume' icon
                 }
                 else
                 {
+                    // mute
                     Muted = true;
                     Volume = mediaPlayerElement.MediaPlayer.Volume;
                     mediaPlayerElement.MediaPlayer.Volume = 0;
-                    VolumeIcon.Glyph = "\uE74F";
+                    targetGlyph = "\uE74F";
+                }
+
+                if (VolumeIcon != null)
+                {
+                    VolumeIcon.Glyph = targetGlyph;
+                }
+
+                if (visualizerVolumeIcon != null)
+                {
+                    visualizerVolumeIcon.Glyph = targetGlyph;
                 }
 
             }
@@ -496,9 +599,30 @@ namespace Kith
             }
         }
 
-        private void FullScreenButton_Click(object sender, RoutedEventArgs e)
+        private async void FullScreenButton_Click(object sender, RoutedEventArgs e)
         {
+            LayoutRoot.Visibility = Visibility.Collapsed;
+            AudioVisualizerMode.Visibility = Visibility.Visible;
 
+            ExtendsContentIntoTitleBar = false;
+
+            // link media player
+            if (mediaPlayerElement.MediaPlayer != null)
+            {
+                visualizerMediaPlayerElement.SetMediaPlayer(mediaPlayerElement.MediaPlayer);
+            }
+
+            if ((OverlappedPresenter)AppWindow.Presenter != null)
+            {
+                ((OverlappedPresenter)AppWindow.Presenter).IsResizable = false;
+                ((OverlappedPresenter)AppWindow.Presenter).IsMaximizable = false;
+                ((OverlappedPresenter)AppWindow.Presenter).IsMinimizable = false;
+            }
+
+            if (AppWindow != null)
+            {
+                AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+            }
         }
         private void AllSongsButton_Click(object sender, RoutedEventArgs e)
         {
@@ -519,6 +643,7 @@ namespace Kith
             Collection n = new Collection();
 
             CollectionViewModel.AllCollections.Add(n);
+            CollectionViewModel.playlists.Add(n);
 
             CollectionViewModel.SelectedCollection = n;
             CurrentCollection = n;
@@ -639,7 +764,9 @@ namespace Kith
 
         private void MediaPlayer_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
         {
-            previousSong = ViewModel.PlayingSong;
+            //Console.WriteLine($"media ended: {ViewModel.PlayingSong.Title}");
+            pastSongs.Push(ViewModel.PlayingSong);
+
             if (repeatEnabled)
             {
                 DispatcherQueue.TryEnqueue(() =>
@@ -737,7 +864,21 @@ namespace Kith
             {
                 if (menu.Tag is Collection collection)
                 {
+                    if (collection.GetType() == typeof(Album))
+                    {
+                        CollectionViewModel.albums.Remove(collection);
+                    }
+                    else
+                    {
+                        CollectionViewModel.playlists.Remove(collection);
+                    }
+                    if (CollectionFilter.Text != "")
+                    {
+                        CollectionViewModel.filtered.Remove(collection);
+                    }
+
                     CollectionViewModel.AllCollections.Remove(collection);
+
 
                     if(CurrentCollection == collection)
                     {
@@ -810,9 +951,9 @@ namespace Kith
                 }
                 else
                 {
-                    if (previousSong != null)
+                    if (pastSongs.Count() != 0)
                     {
-                        LoadAndPlaySong(previousSong, TimeSpan.Zero);
+                        LoadAndPlaySong(pastSongs.Pop(), TimeSpan.Zero);
                     }
                     else
                     {
@@ -828,6 +969,8 @@ namespace Kith
             {
                 if (ViewModel.SongQueue.queue.Count != 0)
                 {
+                    //Console.WriteLine("next from queue");
+                    pastSongs.Push(ViewModel.PlayingSong);
                     LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
                 }
                 else
@@ -970,6 +1113,9 @@ namespace Kith
 
                     foreach (Collection col in CollectionViewModel.AllCollections)
                     {
+                        // mark if album or playlist
+                        string collectionType = col is Album ? "ALBUM" : "COLLECTION";
+                        writetext.Write($"{collectionType};");
 
                         writetext.Write($"{col.collection_name};");
                         writetext.Write($"{col.collection_description};");
@@ -1031,8 +1177,7 @@ namespace Kith
 
                     if (resume != null){
                         lastPlayedPosition = pos;
-                        await LoadAndPlaySong(resume, lastPlayedPosition);
-                        mediaPlayerElement.MediaPlayer.Pause();
+                        await LoadAndPlaySong(resume, lastPlayedPosition, false);
                     }
 
                     // liked songs collection
@@ -1063,17 +1208,28 @@ namespace Kith
 
                     }
 
-                    // playlists
-                    string playlistData;
-                    string[] playlistParsed;
-
-                    playlistData = readtext.ReadLine();
-                    //System.Console.WriteLine($"{playlistData}");
+                    // playlists/albums
+                    string playlistData = readtext.ReadLine();
                     while (playlistData != null)
                     {
-                        playlistParsed = playlistData.Split(';');
+                        string[] playlistParsed = playlistData.Split(';');
+                        if (playlistParsed.Length < 4)
+                        {
+                            playlistData = readtext.ReadLine();
+                            continue;
+                        }
 
-                        string coverFileName = playlistParsed[2].Trim();
+                        // album/playlist
+                        bool isNewFormat = playlistParsed[0] == "ALBUM" || playlistParsed[0] == "COLLECTION";
+
+                        int nameIdx = isNewFormat ? 1 : 0;
+                        int descIdx = isNewFormat ? 2 : 1;
+                        int coverIdx = isNewFormat ? 3 : 2;
+                        int songsStartIdx = isNewFormat ? 4 : 3;
+
+                        string type = isNewFormat ? playlistParsed[0] : "COLLECTION";
+
+                        string coverFileName = playlistParsed[coverIdx].Trim();
                         string fullCoverPath = coverFileName;
 
                         if (!string.IsNullOrEmpty(coverFileName) && !coverFileName.StartsWith("ms-appdata:///local/"))
@@ -1081,28 +1237,471 @@ namespace Kith
                             fullCoverPath = "ms-appdata:///local/" + coverFileName;
                         }
 
-                        Collection newCol = new Collection(playlistParsed[0], playlistParsed[1], fullCoverPath, true);
-
-                        CollectionViewModel.AllCollections.Add(newCol);
-
-                        size = playlistParsed.Count();
-                        for (int i = 3; i <= (size - 2); i++)
+                        List<Song> loadedSongs = new List<Song>();
+                        for (int i = songsStartIdx; i < playlistParsed.Length - 1; i++)
                         {
-                            Song s = Songs.Find(x => x.FileName == playlistParsed[i]);
-
-                            newCol.Add(s);
-
+                            if (!string.IsNullOrWhiteSpace(playlistParsed[i]))
+                            {
+                                Song s = Songs.Find(x => x.FileName == playlistParsed[i]);
+                                if (s != null) loadedSongs.Add(s);
+                            }
                         }
+
+                        // album
+                        if (type == "ALBUM" && loadedSongs.Count > 0)
+                        {
+                            Album newAlbum = new Album(loadedSongs);
+                            CollectionViewModel.AllCollections.Add(newAlbum);
+                            CollectionViewModel.albums.Add(newAlbum);
+                        }
+                        // playlist
+                        else
+                        {
+                            Collection newCol = new Collection(playlistParsed[nameIdx], playlistParsed[descIdx], fullCoverPath, true);
+                            foreach (Song s in loadedSongs)
+                            {
+                                newCol.Add(s);
+                            }
+                            CollectionViewModel.AllCollections.Add(newCol);
+                            CollectionViewModel.playlists.Add(newCol);
+                        }
+
                         playlistData = readtext.ReadLine();
                     }
-
-
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to load state: {ex.Message}");
             } 
+        }
+
+        // triggers fft calculation every tick (30ms)
+        private void VisualizerTimer_Tick(object sender, object e)
+        {
+            //Console.WriteLine("timer tick");
+
+            if (AudioVisualizerMode.Visibility != Visibility.Visible || mediaPlayerElement.MediaPlayer == null) return;
+
+            if (mediaPlayerElement.MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing)
+            {
+                TimeSpan currentPos = mediaPlayerElement.MediaPlayer.PlaybackSession.Position;
+                float[] magnitudes = _audioHelper.GetFft(currentPos);
+
+                if (magnitudes != null)
+                {
+                    UpdateVisualizer(magnitudes);
+                }
+            }
+            else
+            {
+                UpdateVisualizer(new float[512]);
+            }
+        }
+
+        // calculates heights and updates ui, groups magnitudes into barCount bins
+        private void UpdateVisualizer(float[] magnitudes)
+        {
+            float[] displayBars = new float[BarCount];
+            int maxBin = magnitudes.Length / 2;
+
+            for (int i = 0; i < BarCount; i++)
+            {
+                double lowerBound = Math.Pow(maxBin, (double)i / BarCount);
+                double upperBound = Math.Pow(maxBin, (double)(i + 1) / BarCount);
+
+                int startBin = (int)Math.Floor(lowerBound);
+                int endBin = (int)Math.Ceiling(upperBound);
+
+                if (endBin <= startBin) endBin = startBin + 1;
+                if (endBin > magnitudes.Length) endBin = magnitudes.Length;
+
+                float maxMagnitude = 0;
+                for (int j = startBin; j < endBin; j++)
+                {
+                    if (magnitudes[j] > maxMagnitude)
+                        maxMagnitude = magnitudes[j];
+                }
+                
+                // scaling
+                float intensity = (float)(Math.Sqrt(maxMagnitude) * 150);
+
+                intensity = Math.Max(5, intensity); // min height
+                intensity = Math.Min(250, intensity); // max height
+
+                float smoothingAmount = intensity > lastFrameBars[i] ? 0.7f : 0.15f;
+
+                displayBars[i] = LinInterpolation(lastFrameBars[i], intensity, smoothingAmount);
+                lastFrameBars[i] = displayBars[i];
+
+                AudioBars[i].Height = displayBars[i];
+            }
+        }
+
+        // smooth gliding of the bars instead of snapping to new pos
+        private float LinInterpolation(float start, float end, float amount)
+        {
+            return start + (end - start) * amount;
+        }
+
+        private void ExitVisualizer_Tapped(object sender, RoutedEventArgs e)
+        {
+            AudioVisualizerMode.Visibility = Visibility.Collapsed;
+            LayoutRoot.Visibility = Visibility.Visible;
+
+            AppWindow.SetPresenter(AppWindowPresenterKind.Default);
+
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(TitleBarContainer);
+        }
+
+        private async Task UpdateVisualizerThemeAsync(Song song)
+        {
+            if (song?.Pictures == null || song.Pictures.Length == 0) return;
+
+            try
+            {
+                using (SoftwareBitmap bitmap = await VisualHelper.GetBitmapFromIPicture(song.Pictures[0]))
+                {
+                    if (bitmap == null) return;
+
+                    string hexColor = await VisualHelper.ExtractFeatureColor(bitmap);
+                    var rawColor = VisualHelper.GetColorFromHex(hexColor);
+                    bool isLight = VisualHelper.IsColorLight(rawColor);
+                    SolidColorBrush brush;
+                    SolidColorBrush emptyTrackBrush;
+
+                    if (isLight)
+                    {
+                        brush = new SolidColorBrush(rawColor);
+                        emptyTrackBrush = new SolidColorBrush(Color.FromArgb(70, rawColor.R, rawColor.G, rawColor.B));
+                    }
+                    else
+                    {
+                        var lightenedColor = VisualHelper.LightenColor(rawColor, 0.2);
+                        brush = new SolidColorBrush(lightenedColor);
+                        lightenedColor = VisualHelper.LightenColor(rawColor, 0.4);
+                        emptyTrackBrush = new SolidColorBrush(Color.FromArgb(70, lightenedColor.R, lightenedColor.G, lightenedColor.B));
+                    }
+                    
+
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        // volume slider
+                        visualizerVolumeSlider.Foreground = brush;
+                        visualizerVolumeSlider.BorderBrush = brush;
+
+                        var vrs = visualizerVolumeSlider.Resources;
+                        vrs["SliderThumbBackground"] = brush;
+                        vrs["SliderThumbBackgroundPointerOver"] = brush;
+                        vrs["SliderThumbBackgroundPressed"] = brush;
+                        vrs["SliderTrackValueFill"] = brush;
+                        vrs["SliderTrackValueFillPointerOver"] = brush;
+                        vrs["SliderTrackValueFillPressed"] = brush;
+                        vrs["SliderTickBarFill"] = brush;
+
+                        vrs["SliderTrackFill"] = emptyTrackBrush;
+                        vrs["SliderTrackFillPointerOver"] = emptyTrackBrush;
+                        vrs["SliderTrackFillPressed"] = emptyTrackBrush;
+
+                        vrs["ProgressBarBackgroundThemeBrush"] = emptyTrackBrush;
+                        vrs["ProgressBarBackground"] = emptyTrackBrush;
+
+                        visualizerVolumeSlider.FocusVisualPrimaryBrush = brush;
+                        visualizerVolumeSlider.FocusVisualSecondaryBrush = new SolidColorBrush(Microsoft.UI.Colors.Black);
+
+                        // transport controls slider
+                        var tc = visualizerTransportControls;
+                        tc.Resources["SliderTrackValueFill"] = brush;
+                        tc.Resources["SliderTrackValueFillPointerOver"] = brush;
+                        tc.Resources["SliderThumbBackground"] = brush;
+                        tc.Resources["SliderThumbBackgroundPointerOver"] = brush;
+                        tc.Resources["SliderThumbBackgroundPressed"] = brush;
+                        tc.Resources["SliderTrackValueFillPressed"] = brush;
+                        tc.Resources["ProgressBarForegroundThemeBrush"] = brush;
+                        tc.Resources["ProgressBarIndeterminateForegroundThemeBrush"] = brush;
+                        tc.Resources["ProgressBarForeground"] = brush;
+
+                        tc.Resources["SliderTrackFill"] = emptyTrackBrush;
+                        tc.Resources["SliderTrackFillPointerOver"] = emptyTrackBrush;
+                        tc.Resources["SliderTrackFillPressed"] = emptyTrackBrush;
+
+                        tc.Resources["ProgressBarBackgroundThemeBrush"] = emptyTrackBrush;
+                        tc.Resources["ProgressBarBackground"] = emptyTrackBrush;
+
+
+                        // background gradient
+                        LinearGradientBrush dynamicGradient = new LinearGradientBrush();
+                        dynamicGradient.StartPoint = new Windows.Foundation.Point(0, 0);
+                        dynamicGradient.EndPoint = new Windows.Foundation.Point(0, 1);
+
+                        // audio bars
+                        foreach (var bar in AudioBars)
+                        {
+                            bar.BarBrush = brush;
+                        }
+  
+                        Color topColor = Color.FromArgb(180, rawColor.R, rawColor.G, rawColor.B);
+                        dynamicGradient.GradientStops.Add(new GradientStop() { Color = topColor, Offset = 0.1 });
+
+                        dynamicGradient.GradientStops.Add(new GradientStop() { Color = VisualHelper.GetColorFromHex("#1B1B1B"), Offset = 0.8 });
+
+                        VisualizerGradient.Fill = dynamicGradient;
+
+                        // refresh
+                        RefreshElementTheme(visualizerVolumeSlider);
+                        RefreshElementTheme(tc);
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Theme Update Error: {ex.Message}");
+            }
+        }
+
+        private void RefreshElementTheme(FrameworkElement element)
+        {
+            var current = element.RequestedTheme;
+            element.RequestedTheme = current == ElementTheme.Light ? ElementTheme.Dark : ElementTheme.Light;
+            element.RequestedTheme = ElementTheme.Default;
+        }
+
+        private async void downloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            string url = downloader.Text;
+            downloader.Text = "";
+
+            downloadProgressRing.IsActive = true;
+            downloadProgressRing.IsIndeterminate = true;
+
+            var progress = new Progress<double>(p =>
+            {
+                if (downloadProgressRing.IsIndeterminate)
+                {
+                    downloadProgressRing.IsIndeterminate = false;
+                }
+
+                downloadProgressRing.Value = p * 100;
+            });
+
+            await Downloader.Download(url, progress);
+
+            downloadProgressRing.Value = 0;
+            downloadProgressRing.IsActive = false;
+
+            RefreshSongs();
+
+            CollectionViewModel.ChangeSelectedCollection(CurrentCollection);
+            ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
+        }
+
+        private void groupByAlbumButton_Click(object sender, RoutedEventArgs e)
+        {
+            Dictionary<string, string> albumMap = new Dictionary<string, string>();
+            String albumSongs;
+
+            foreach (Song s in Songs)
+            {
+                if (albumMap.ContainsKey(s.Album))
+                {
+                    albumMap.TryGetValue(s.Album, out albumSongs);
+                    albumSongs = albumSongs + ";" + s.FileName;
+                    albumMap[$"{s.Album}"] = albumSongs;
+                }
+                else
+                {
+                    albumMap.Add(s.Album, s.FileName);
+                }
+            }
+
+            foreach (KeyValuePair<string, string> entry in albumMap)
+            {
+                //Console.WriteLine($"Album: {entry.Key}, songs: {entry.Value}");
+
+                if (entry.Value.Contains(";"))
+                {
+                    string[] songFileNames = entry.Value.Split(";");
+                    
+                    List<Song> songsForAlbum = Songs.FindAll(song => songFileNames.Contains(song.FileName));
+
+                    if (songsForAlbum.Count > 0)
+                    {
+                        string targetAlbumName = songsForAlbum[0].Album;
+
+                        var existingCollection = CollectionViewModel.AllCollections.FirstOrDefault(c => c.collection_name == targetAlbumName);
+
+                        if (existingCollection != null)
+                        {
+                            existingCollection.collection_songs = songsForAlbum;
+
+                            // Console.WriteLine($"Updated existing album: {targetAlbumName}");
+                        }
+                        else
+                        {
+                            Album album = new Album(songsForAlbum);
+                            CollectionViewModel.AllCollections.Add(album);
+                            CollectionViewModel.albums.Add(album);
+
+                            // Console.WriteLine($"Created new album: {targetAlbumName}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Warning: No matching Song objects found for Album '{entry.Key}'.");
+                    }
+                }
+            }
+
+
+        }
+
+        private void albumFilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void playlistFilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void ApplyFilters()
+        {
+            bool showAlbums = albumFilterButton.IsChecked == true;
+            bool showPlaylists = playlistFilterButton.IsChecked == true;
+
+            Collection sel_col = CurrentCollection;
+
+            if (showAlbums && showPlaylists)
+            {
+                // show both
+                CollectionsView.ItemsSource = CollectionViewModel.AllCollections;
+
+                CollectionViewModel.SelectedCollection = sel_col;
+                CurrentCollection = sel_col;
+
+                ViewModel.SwapCurrentCollectionSelection(sel_col.collection_songs);
+            }
+            else if (showAlbums && !showPlaylists)
+            {
+                // show albums
+                CollectionsView.ItemsSource = CollectionViewModel.albums;
+
+                if (sel_col.GetType() == typeof(Album))
+                {
+                    CollectionViewModel.SelectedCollection = sel_col;
+                    CurrentCollection = sel_col;
+
+                    ViewModel.SwapCurrentCollectionSelection(sel_col.collection_songs);
+                }
+                else
+                {
+                    CollectionViewModel.SelectedCollection = AllSongsCollection;
+                    CurrentCollection = AllSongsCollection;
+
+                    ViewModel.SwapCurrentCollectionSelection(AllSongsCollection.collection_songs);
+                }
+            }
+            else if (!showAlbums && showPlaylists)
+            {
+                // show playlists
+                CollectionsView.ItemsSource = CollectionViewModel.playlists;
+
+                if (sel_col.GetType() != typeof(Album))
+                {
+                    CollectionViewModel.SelectedCollection = sel_col;
+                    CurrentCollection = sel_col;
+
+                    ViewModel.SwapCurrentCollectionSelection(sel_col.collection_songs);
+                }
+                else
+                {
+                    CollectionViewModel.SelectedCollection = AllSongsCollection;
+                    CurrentCollection = AllSongsCollection;
+
+                    ViewModel.SwapCurrentCollectionSelection(AllSongsCollection.collection_songs);
+                }
+            }
+            else
+            {
+                // show nothing.
+                CollectionsView.ItemsSource = null;
+
+                CollectionViewModel.SelectedCollection = AllSongsCollection;
+                CurrentCollection = AllSongsCollection;
+
+                ViewModel.SwapCurrentCollectionSelection(AllSongsCollection.collection_songs);
+            }
+        }
+
+        private void filterCollections(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+            string filter = CollectionFilter.Text;
+
+            var filtered = CollectionViewModel.AllCollections.Where(c => c.collection_name.Contains(filter, StringComparison.OrdinalIgnoreCase) || c.collection_description.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+            var currentSelection = CollectionViewModel.SelectedCollection;
+
+            CollectionViewModel.filtered = new ObservableCollection<Collection>(filtered);
+
+            CollectionsView.ItemsSource = CollectionViewModel.filtered;
+
+            if (currentSelection != null && CollectionViewModel.filtered.Contains(currentSelection))
+            {
+                CollectionsView.SelectedItem = currentSelection;
+                CollectionViewModel.SelectedCollection = currentSelection;
+            }
+            else if (CollectionViewModel.filtered.Count > 0)
+            {
+                CollectionsView.SelectedItem = CollectionViewModel.filtered[0];
+            }
+        }
+
+        private void filterSongs(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+            string filter = SongFilter.Text;
+            //Console.WriteLine($"filter: {filter}");
+
+            var filtered = ViewModel.CurrentCollectionSongs.Where(s => s.Title.Contains(filter, StringComparison.OrdinalIgnoreCase) || s.Artists[0].Contains(filter, StringComparison.OrdinalIgnoreCase) || s.Album.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+            ViewModel.filtered = new ObservableCollection<Song>(filtered);
+
+            SongsView.ItemsSource = ViewModel.filtered;
+        }
+
+        private void CollectionShuffleButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SongQueue.Clear();
+
+            List<Song> col_songs = ViewModel.CurrentCollectionSongs.ToList<Song>();
+
+            while(col_songs.Count() != 0)
+            {
+                Random rnd = new Random();
+                int rand = rnd.Next(0, col_songs.Count);
+                ViewModel.SongQueue.add(col_songs[rand]);
+                col_songs.RemoveAt(rand);
+            }
+            LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+        }
+
+        private void CollectionPlayPauseButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SongQueue.Clear();
+
+            List<Song> col_songs = ViewModel.CurrentCollectionSongs.ToList<Song>();
+
+            for(int i=0;  i<col_songs.Count(); i++)
+            {
+                ViewModel.SongQueue.add(col_songs[i]);
+            }
+            LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+        }
+
+        private void QueueClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SongQueue.Clear();
         }
     }
 }

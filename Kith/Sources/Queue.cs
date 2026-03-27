@@ -50,5 +50,10 @@ namespace Kith.Sources
         {
             this.queue.Remove(s);
         }
+
+        public void Clear()
+        {
+            queue.Clear();
+        }
     }
 }

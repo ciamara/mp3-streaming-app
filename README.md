@@ -7,13 +7,18 @@
 - Advanced Metadata Editor: Built-in support for editing ID3 tags (Title, Artist, Album, Year, Track, Album Cover and Genres) using the **TagLib#** library.
 - Custom Album Art: Update and embed new album covers directly into your music files by tapping the current artwork.
 - Dynamic Playlists (Collections): Organize your music into collections, including a default "All Songs" view and a "Liked Songs" section.
+- Dynamic Albums: automatic grouping (triggered by a button) of songs into albums, if there are more than 1 song of an album -> create an album and automatically fill
+  out name description and cover
 - Modern Audio Controls with a true random shuffle (not like spotify) : Complete transport controls including seek, volume, mute, and shuffle/repeat functionality.
 - Fully functional queue
-- saving application state between sessions
+- Saving application state between sessions
+- Downloading mp3 files from youtube by link
+- Focus mode with dynamic color based on the album cover
+- Quality of life features like search boxes and filters
 
 ## Structure
 - Converters: Custom XAML value converters (DurationConverter, IPictureImageConverter, StringJoinConverter) to handle data formatting.
-- Sources: The core logic and ViewModels (SongView.cs, CollectionView.cs) following an MVVM-inspired pattern.
+- Sources: The core logic and ViewModels (SongView.cs, CollectionView.cs) following an MVVM pattern.
 - Assets: Houses application icons, fonts and static images.
 - App.xaml: Defines the global theme (Dark Mode) and reusable styles for the elements.
 
@@ -24,10 +29,7 @@
 - Platform: Windows 10/11 (Desktop)
 
 ## Roadmap
-- song history for being able to skip back
-- add dynamic animations based on the album cover art to focus mode
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
-
 
 ## Gallery
 Main window
@@ -42,8 +44,10 @@ Main window with album grouping open
 ![Main Window](md_screens/screen5.png)       
 Main window with song search bar used                        
 ![Main Window](md_screens/screen7.png)             
-Focus mode open                          
+Focus mode open 1                          
 ![Main Window](md_screens/screen6.png)               
+Focus mode open 2                          
+![Main Window](md_screens/screen8.png)               
 
 
 

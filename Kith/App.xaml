@@ -835,7 +835,8 @@
                                                 <CommandBar.PrimaryCommands>
                                                     <AppBarToggleButton x:Name='ShuffleButton'
                                                                         Style='{StaticResource playertogglebuttonstyle}'
-                                                                        MediaTransportControlsHelper.DropoutOrder='1'>
+                                                                        MediaTransportControlsHelper.DropoutOrder='1'
+                                                                        ToolTipService.ToolTip="shuffle">
                                                         <AppBarToggleButton.Icon>
                                                             <SymbolIcon x:Name="ShuffleSymbol" Symbol="Shuffle"/>
                                                         </AppBarToggleButton.Icon>
@@ -860,6 +861,7 @@
                                                     <AppBarToggleButton x:Name='CustomRepeatButton'
                                                                         Style='{StaticResource playertogglebuttonstyle}'
                                                                         MediaTransportControlsHelper.DropoutOrder='1'
+                                                                        ToolTipService.ToolTip="loop song"
                                                                         Visibility='Collapsed'>
                                                         <AppBarToggleButton.Icon>
                                                             <SymbolIcon x:Name="RepeatSymbol" Symbol="RepeatAll" VerticalAlignment="Bottom"/>
