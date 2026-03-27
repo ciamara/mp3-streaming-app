@@ -13,7 +13,7 @@
 - Fully functional queue
 - Saving application state between sessions
 - Downloading mp3 files from youtube by link
-- Focus mode with dynamic color based on the album cover
+- Focus mode with dynamic visualizer, color based on the album cover
 - Quality of life features like search boxes and filters
 
 ## Structure
@@ -29,7 +29,6 @@
 - Platform: Windows 10/11 (Desktop)
 
 ## Roadmap
-- add dynamic animations based on the album cover art to focus mode
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
 
 ## Gallery
@@ -45,8 +44,10 @@ Main window with album grouping open
 ![Main Window](md_screens/screen5.png)       
 Main window with song search bar used                        
 ![Main Window](md_screens/screen7.png)             
-Focus mode open                          
+Focus mode open 1                               
 ![Main Window](md_screens/screen6.png)               
+Focus mode open 2                                   
+![Main Window](md_screens/screen8.png)               
 
 
 
