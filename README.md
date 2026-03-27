@@ -29,7 +29,6 @@
 - Platform: Windows 10/11 (Desktop)
 
 ## Roadmap
-- add dynamic animations based on the album cover art to focus mode
 - Integrated CD burning function with the ability to directly and quickly burn already made playlists
 
 ## Gallery
@@ -45,5 +44,7 @@ Main window with album grouping open
 ![Main Window](md_screens/screen5.png)       
 Main window with song search bar used                        
 ![Main Window](md_screens/screen7.png)             
-Focus mode open                          
+Focus mode open 1                          
 ![Main Window](md_screens/screen6.png)               
+Focus mode open 2                          
+![Main Window](md_screens/screen8.png)               
