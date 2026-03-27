@@ -13,7 +13,7 @@
 - Fully functional queue
 - Saving application state between sessions
 - Downloading mp3 files from youtube by link
-- Focus mode with dynamic color based on the album cover
+- Focus mode with dynamic visualizer, color based on the album cover
 - Quality of life features like search boxes and filters
 
 ## Structure
