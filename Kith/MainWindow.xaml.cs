@@ -12,19 +12,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using TagLib;
-using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Media.Playback;
-using Windows.Services.Maps;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI;
-using Xamarin.Essentials;
-using static System.Net.Mime.MediaTypeNames;
 using Window = Microsoft.UI.Xaml.Window;
 
 
@@ -69,9 +64,28 @@ namespace Kith
         private const int BarCount = 32;
         private float[] lastFrameBars = new float[BarCount];
 
+        public ObservableCollection<AudioBar> AudioBars { get; set; }
+
+        private AudioHelper _audioHelper;
+        private DispatcherTimer _visualizerTimer;
+
         public MainWindow()
         {
             this.InitializeComponent();
+
+            // initializing audio bars
+            AudioBars = new ObservableCollection<AudioBar>();
+            for (int i = 0; i < BarCount; i++)
+            {
+                AudioBars.Add(new AudioBar { Height = 10 }); // min height
+            }
+
+            _audioHelper = new AudioHelper();
+
+            _visualizerTimer = new DispatcherTimer();
+            _visualizerTimer.Interval = TimeSpan.FromMilliseconds(30);
+            _visualizerTimer.Tick += VisualizerTimer_Tick;
+            _visualizerTimer.Start();
 
             mediaPlayerElement.MediaPlayer.MediaEnded += MediaPlayer_MediaEnded;
 
@@ -166,6 +180,7 @@ namespace Kith
                 }
             }
         }
+
         private void MinimizeBtn_Click(object sender, RoutedEventArgs e)
         {
             OverlappedPresenter presenter = (OverlappedPresenter)AppWindow.Presenter;
@@ -372,6 +387,8 @@ namespace Kith
             try
             {
                 ViewModel.PlayingSong = song;
+
+                _audioHelper.Load(song.FileName);
 
                 Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(song.FileName);
 
@@ -747,7 +764,7 @@ namespace Kith
 
         private void MediaPlayer_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
         {
-            Console.WriteLine($"media ended: {ViewModel.PlayingSong.Title}");
+            //Console.WriteLine($"media ended: {ViewModel.PlayingSong.Title}");
             pastSongs.Push(ViewModel.PlayingSong);
 
             if (repeatEnabled)
@@ -1259,37 +1276,69 @@ namespace Kith
             } 
         }
 
-        /// <summary>
-        /// Handles FftCalculated from AudioHelper.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="magnitudes">magintudes calculated in AudioHelper</param>
-        private void OnFftCalculated(object sender, float[] magnitudes)
+        // triggers fft calculation every tick (30ms)
+        private void VisualizerTimer_Tick(object sender, object e)
         {
-            int barCount = 32;
-            float[] displayBars = new float[barCount];
+            //Console.WriteLine("timer tick");
 
-            // grouping fft bins into bars
-            int binsPerBar = magnitudes.Length / barCount;
+            if (AudioVisualizerMode.Visibility != Visibility.Visible || mediaPlayerElement.MediaPlayer == null) return;
 
-            for (int i = 0; i < barCount; i++)
+            if (mediaPlayerElement.MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing)
             {
-                float average = 0;
-                for (int j = 0; j < binsPerBar; j++)
+                TimeSpan currentPos = mediaPlayerElement.MediaPlayer.PlaybackSession.Position;
+                float[] magnitudes = _audioHelper.GetFft(currentPos);
+
+                if (magnitudes != null)
                 {
-                    average += magnitudes[(i * binsPerBar) + j];
+                    UpdateVisualizer(magnitudes);
                 }
-                average /= binsPerBar;
-
-                // log scaling -> low frequencies more visible
-                // A scaling -> bars taller
-                float intensity = (float)Math.Log10(1 + average) * 100;
-
-                // smoothing
-                displayBars[i] = LinInterpolation(lastFrameBars[i], intensity, 0.2f);
+            }
+            else
+            {
+                UpdateVisualizer(new float[512]);
             }
         }
 
+        // calculates heights and updates ui, groups magnitudes into barCount bins
+        private void UpdateVisualizer(float[] magnitudes)
+        {
+            float[] displayBars = new float[BarCount];
+            int maxBin = magnitudes.Length / 2;
+
+            for (int i = 0; i < BarCount; i++)
+            {
+                double lowerBound = Math.Pow(maxBin, (double)i / BarCount);
+                double upperBound = Math.Pow(maxBin, (double)(i + 1) / BarCount);
+
+                int startBin = (int)Math.Floor(lowerBound);
+                int endBin = (int)Math.Ceiling(upperBound);
+
+                if (endBin <= startBin) endBin = startBin + 1;
+                if (endBin > magnitudes.Length) endBin = magnitudes.Length;
+
+                float maxMagnitude = 0;
+                for (int j = startBin; j < endBin; j++)
+                {
+                    if (magnitudes[j] > maxMagnitude)
+                        maxMagnitude = magnitudes[j];
+                }
+                
+                // scaling
+                float intensity = (float)(Math.Sqrt(maxMagnitude) * 150);
+
+                intensity = Math.Max(5, intensity); // min height
+                intensity = Math.Min(250, intensity); // max height
+
+                float smoothingAmount = intensity > lastFrameBars[i] ? 0.7f : 0.15f;
+
+                displayBars[i] = LinInterpolation(lastFrameBars[i], intensity, smoothingAmount);
+                lastFrameBars[i] = displayBars[i];
+
+                AudioBars[i].Height = displayBars[i];
+            }
+        }
+
+        // smooth gliding of the bars instead of snapping to new pos
         private float LinInterpolation(float start, float end, float amount)
         {
             return start + (end - start) * amount;
@@ -1318,7 +1367,23 @@ namespace Kith
 
                     string hexColor = await VisualHelper.ExtractFeatureColor(bitmap);
                     var rawColor = VisualHelper.GetColorFromHex(hexColor);
-                    SolidColorBrush brush = new SolidColorBrush(rawColor);
+                    bool isLight = VisualHelper.IsColorLight(rawColor);
+                    SolidColorBrush brush;
+                    SolidColorBrush emptyTrackBrush;
+
+                    if (isLight)
+                    {
+                        brush = new SolidColorBrush(rawColor);
+                        emptyTrackBrush = new SolidColorBrush(Color.FromArgb(70, rawColor.R, rawColor.G, rawColor.B));
+                    }
+                    else
+                    {
+                        var lightenedColor = VisualHelper.LightenColor(rawColor, 0.2);
+                        brush = new SolidColorBrush(lightenedColor);
+                        lightenedColor = VisualHelper.LightenColor(rawColor, 0.4);
+                        emptyTrackBrush = new SolidColorBrush(Color.FromArgb(70, lightenedColor.R, lightenedColor.G, lightenedColor.B));
+                    }
+                    
 
                     DispatcherQueue.TryEnqueue(() =>
                     {
@@ -1335,6 +1400,13 @@ namespace Kith
                         vrs["SliderTrackValueFillPressed"] = brush;
                         vrs["SliderTickBarFill"] = brush;
 
+                        vrs["SliderTrackFill"] = emptyTrackBrush;
+                        vrs["SliderTrackFillPointerOver"] = emptyTrackBrush;
+                        vrs["SliderTrackFillPressed"] = emptyTrackBrush;
+
+                        vrs["ProgressBarBackgroundThemeBrush"] = emptyTrackBrush;
+                        vrs["ProgressBarBackground"] = emptyTrackBrush;
+
                         visualizerVolumeSlider.FocusVisualPrimaryBrush = brush;
                         visualizerVolumeSlider.FocusVisualSecondaryBrush = new SolidColorBrush(Microsoft.UI.Colors.Black);
 
@@ -1344,13 +1416,31 @@ namespace Kith
                         tc.Resources["SliderTrackValueFillPointerOver"] = brush;
                         tc.Resources["SliderThumbBackground"] = brush;
                         tc.Resources["SliderThumbBackgroundPointerOver"] = brush;
+                        tc.Resources["SliderThumbBackgroundPressed"] = brush;
+                        tc.Resources["SliderTrackValueFillPressed"] = brush;
+                        tc.Resources["ProgressBarForegroundThemeBrush"] = brush;
+                        tc.Resources["ProgressBarIndeterminateForegroundThemeBrush"] = brush;
+                        tc.Resources["ProgressBarForeground"] = brush;
+
+                        tc.Resources["SliderTrackFill"] = emptyTrackBrush;
+                        tc.Resources["SliderTrackFillPointerOver"] = emptyTrackBrush;
+                        tc.Resources["SliderTrackFillPressed"] = emptyTrackBrush;
+
+                        tc.Resources["ProgressBarBackgroundThemeBrush"] = emptyTrackBrush;
+                        tc.Resources["ProgressBarBackground"] = emptyTrackBrush;
+
 
                         // background gradient
                         LinearGradientBrush dynamicGradient = new LinearGradientBrush();
                         dynamicGradient.StartPoint = new Windows.Foundation.Point(0, 0);
                         dynamicGradient.EndPoint = new Windows.Foundation.Point(0, 1);
 
-
+                        // audio bars
+                        foreach (var bar in AudioBars)
+                        {
+                            bar.BarBrush = brush;
+                        }
+  
                         Color topColor = Color.FromArgb(180, rawColor.R, rawColor.G, rawColor.B);
                         dynamicGradient.GradientStops.Add(new GradientStop() { Color = topColor, Offset = 0.1 });
 
