@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36301.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kith", "Kith.csproj", "{23684F87-32B1-4615-9A1C-BFDB1AF1C442}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioVisualiser", "..\..\AudioVisualiser\AudioVisualiser\AudioVisualiser\AudioVisualiser.csproj", "{EFE9C4E5-5269-5F0B-3240-28A04C1790F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioHelpers", "..\..\AudioVisualiser\AudioVisualiser\AudioVisualiser\AudioHelpers.csproj", "{EFE9C4E5-5269-5F0B-3240-28A04C1790F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,4 +1,4 @@
-﻿using AudioVisualiser;
+﻿using AudioHelpers;
 using Kith.Sources;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -1702,6 +1702,24 @@ namespace Kith
         private void QueueClearButton_Click(object sender, RoutedEventArgs e)
         {
             ViewModel.SongQueue.Clear();
+        }
+
+        private void CdBurnButton_Click(object sender, RoutedEventArgs e)
+        {
+            if(CurrentCollection.collection_duration < 80)
+            {
+                string musicPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+                string dir = Path.Combine(musicPath, "burn");
+                Directory.CreateDirectory(dir);
+
+                foreach(Song s in ViewModel.CurrentCollectionSongs)
+                {
+                    System.IO.File.Copy(s.FileName, Path.Combine(dir, Path.GetFileName(s.FileName)), true);
+
+                }
+                //Burner.BurnCD(dir, CurrentCollection.collection_name);
+                Directory.Delete(dir);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using AudioVisualiser;
+﻿using AudioHelpers;
 using Kith.Sources;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
