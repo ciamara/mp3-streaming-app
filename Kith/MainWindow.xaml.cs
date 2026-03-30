@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -239,6 +240,7 @@ namespace Kith
             //RefreshSongs();
             ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
+
         private void MainSearch_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
         {
 
@@ -338,6 +340,7 @@ namespace Kith
             {
                 mediaPlayerElement.MediaPlayer.Pause();
                 mediaPlayerElement.MediaPlayer.Source = null;
+                _audioHelper?.Dispose();
             }
 
             TagLib.File tfile = TagLib.File.Create(songToUpdate.FileName);
@@ -388,6 +391,10 @@ namespace Kith
             {
                 ViewModel.PlayingSong = song;
 
+                if (_audioHelper == null)
+                {
+                    _audioHelper = new AudioHelper();
+                }
                 _audioHelper.Load(song.FileName);
 
                 Windows.Storage.StorageFile file = await Windows.Storage.StorageFile.GetFileFromPathAsync(song.FileName);
@@ -460,6 +467,7 @@ namespace Kith
 
                 mediaPlayerElement.MediaPlayer.Pause();
                 mediaPlayerElement.MediaPlayer.Source = null;
+                _audioHelper?.Dispose();
             }
 
             byte[] imageBytes;
@@ -507,6 +515,7 @@ namespace Kith
 
             ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
         }
+
         private void AddToQueue(object sender, RoutedEventArgs e)
         {
             if (sender is MenuFlyoutItem menu)
@@ -1082,198 +1091,146 @@ namespace Kith
         {
             try
             {
-                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                string dir = Path.Combine(localAppData, "Kith");
+                string dir = Path.Combine(ApplicationData.Current.LocalFolder.Path, "Kith");
                 Directory.CreateDirectory(dir);
                 string path = Path.Combine(dir, "save.txt");
 
                 using (StreamWriter writetext = new StreamWriter(path))
                 {
-                    if(ViewModel.PlayingSong != null){
-                        writetext.WriteLine($"{ViewModel.PlayingSong.FileName}");
-                    }
-                    else
-                    {
-                        writetext.WriteLine("null");
-                    }
-                        writetext.WriteLine($"{mediaPlayerElement.MediaPlayer.Position}");
-                    writetext.WriteLine($"{Volume}");
+                    // info
+                    writetext.WriteLine(ViewModel.PlayingSong?.FileName ?? "null");
+                    writetext.WriteLine(mediaPlayerElement.MediaPlayer.Position.ToString());
+                    writetext.WriteLine(Volume.ToString());
 
-                    foreach(Song likedSong in LikedSongsCollection.collection_songs)
+                    // liked
+                    foreach (Song likedSong in LikedSongsCollection.collection_songs)
                     {
                         writetext.Write($"{likedSong.FileName};");
                     }
-                    writetext.Write("\n");
+                    writetext.WriteLine();
 
+                    // queue
                     foreach (Song queueSong in ViewModel.SongQueue.queue)
                     {
                         writetext.Write($"{queueSong.FileName};");
                     }
-                    writetext.Write("\n");
+                    writetext.WriteLine();
 
+                    // playlists
                     foreach (Collection col in CollectionViewModel.AllCollections)
                     {
-                        // mark if album or playlist
-                        string collectionType = col is Album ? "ALBUM" : "COLLECTION";
-                        writetext.Write($"{collectionType};");
+                        if (col == AllSongsCollection || col == LikedSongsCollection) continue;
 
-                        writetext.Write($"{col.collection_name};");
-                        writetext.Write($"{col.collection_description};");
+                        string type = col is Album ? "ALBUM" : "COLLECTION";
+                        string cover = string.IsNullOrEmpty(col.collection_cover_filename) ? "none" : col.collection_cover_filename;
 
-                        string cover = col.collection_cover_filename;
-                        if (!string.IsNullOrEmpty(cover))
-                        {
-                            cover = cover.Replace("ms-appdata:///local/", "");
-                        }
-                        writetext.Write($"{cover};");
+                        writetext.Write($"{type};{col.collection_name};{col.collection_description};{cover};");
 
                         foreach (Song colsong in col.collection_songs)
                         {
                             writetext.Write($"{colsong.FileName};");
                         }
-                        writetext.Write("\n");
+                        writetext.WriteLine();
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to save state: {ex.Message}");
-            }
-            
+            catch (Exception ex) { Debug.WriteLine($"Save error: {ex.Message}"); }
         }
 
         private async void LoadState()
         {
             try
             {
-                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                string dir = Path.Combine(localAppData, "Kith");
-                string path = Path.Combine(dir, "save.txt");
-                //System.Console.WriteLine($"{path}");
-
-                Song resume = null;
+                string path = Path.Combine(ApplicationData.Current.LocalFolder.Path, "Kith", "save.txt");
+                if (!System.IO.File.Exists(path)) return;
 
                 using (StreamReader readtext = new StreamReader(path))
                 {
                     string playing_filename = readtext.ReadLine();
-                    foreach (Song s in Songs)
-                    {
-                        if (s.FileName == playing_filename)
-                        {
-                            resume = s;
-                        }
-                    }
-
-                    string stringPos = readtext.ReadLine();
-                    TimeSpan.TryParse(stringPos, out TimeSpan pos);
-                    //System.Console.WriteLine($"{pos}");
-
-                    string stringVol = readtext.ReadLine();
-                    double.TryParse(stringVol, out double vol);
-                    //System.Console.WriteLine($"{vol}");
+                    TimeSpan.TryParse(readtext.ReadLine(), out TimeSpan pos);
+                    double.TryParse(readtext.ReadLine(), out double vol);
                     Volume = vol;
                     mediaPlayerElement.MediaPlayer.Volume = Volume;
-                    volumeSlider.Value = vol*100;
-
-                    if (resume != null){
-                        lastPlayedPosition = pos;
-                        await LoadAndPlaySong(resume, lastPlayedPosition, false);
-                    }
-
-                    // liked songs collection
+                    volumeSlider.Value = vol * 100;
+        
+                    // liked songs
                     string likedData = readtext.ReadLine();
-                    string[] likedParsed = likedData.Split(';');
-
-                    int size = likedParsed.Count();
-                    for (int i = 0; i <= (size - 2); i++)
+                    if (!string.IsNullOrWhiteSpace(likedData))
                     {
-                        Song s = Songs.Find(x => x.FileName == likedParsed[i]);
-                        s.liked = true;
-
-                        LikedSongsCollection.Add(s);
-
+                        foreach (string file in likedData.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            var s = Songs.FirstOrDefault(x => x.FileName == file);
+                            if (s != null) { s.liked = true; LikedSongsCollection.Add(s); }
+                        }
                     }
-
 
                     // queue
                     string queueData = readtext.ReadLine();
-                    string[] queueParsed = queueData.Split(';');
-
-                    size = queueParsed.Count();
-                    for (int i = 0; i <= (size - 2); i++)
+                    if (!string.IsNullOrWhiteSpace(queueData))
                     {
-                        Song s = Songs.Find(x => x.FileName == queueParsed[i]);
-
-                        ViewModel.SongQueue.queue.Add(s);
-
+                        foreach (string file in queueData.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            var s = Songs.FirstOrDefault(x => x.FileName == file);
+                            if (s != null) ViewModel.SongQueue.queue.Add(s);
+                        }
                     }
 
-                    // playlists/albums
-                    string playlistData = readtext.ReadLine();
-                    while (playlistData != null)
+                    // playlists
+                    string playlistLine;
+                    while ((playlistLine = readtext.ReadLine()) != null)
                     {
-                        string[] playlistParsed = playlistData.Split(';');
-                        if (playlistParsed.Length < 4)
+                        if (string.IsNullOrWhiteSpace(playlistLine)) continue;
+
+                        string[] parts = playlistLine.Split(';');
+                        if (parts.Length < 4) continue;
+
+                        string type = parts[0];
+                        string name = parts[1];
+                        string desc = parts[2];
+                        string cover = parts[3];
+
+                        string fullCoverPath = null;
+                        if (cover != "none" && !string.IsNullOrEmpty(cover))
                         {
-                            playlistData = readtext.ReadLine();
-                            continue;
-                        }
-
-                        // album/playlist
-                        bool isNewFormat = playlistParsed[0] == "ALBUM" || playlistParsed[0] == "COLLECTION";
-
-                        int nameIdx = isNewFormat ? 1 : 0;
-                        int descIdx = isNewFormat ? 2 : 1;
-                        int coverIdx = isNewFormat ? 3 : 2;
-                        int songsStartIdx = isNewFormat ? 4 : 3;
-
-                        string type = isNewFormat ? playlistParsed[0] : "COLLECTION";
-
-                        string coverFileName = playlistParsed[coverIdx].Trim();
-                        string fullCoverPath = coverFileName;
-
-                        if (!string.IsNullOrEmpty(coverFileName) && !coverFileName.StartsWith("ms-appdata:///local/"))
-                        {
-                            fullCoverPath = "ms-appdata:///local/" + coverFileName;
+                            fullCoverPath = cover.Contains("://") ? cover : "ms-appdata:///local/" + cover;
                         }
 
                         List<Song> loadedSongs = new List<Song>();
-                        for (int i = songsStartIdx; i < playlistParsed.Length - 1; i++)
+                        for (int i = 4; i < parts.Length; i++)
                         {
-                            if (!string.IsNullOrWhiteSpace(playlistParsed[i]))
-                            {
-                                Song s = Songs.Find(x => x.FileName == playlistParsed[i]);
-                                if (s != null) loadedSongs.Add(s);
-                            }
+                            if (string.IsNullOrWhiteSpace(parts[i])) continue;
+                            var s = Songs.FirstOrDefault(x => x.FileName == parts[i]);
+                            if (s != null) loadedSongs.Add(s);
                         }
 
-                        // album
                         if (type == "ALBUM" && loadedSongs.Count > 0)
                         {
                             Album newAlbum = new Album(loadedSongs);
                             CollectionViewModel.AllCollections.Add(newAlbum);
                             CollectionViewModel.albums.Add(newAlbum);
                         }
-                        // playlist
                         else
                         {
-                            Collection newCol = new Collection(playlistParsed[nameIdx], playlistParsed[descIdx], fullCoverPath, true);
-                            foreach (Song s in loadedSongs)
+                            Collection newCol;
+                            if (fullCoverPath != null)
                             {
-                                newCol.Add(s);
+                                newCol = new Collection(name, desc, fullCoverPath, true);
                             }
+                            else
+                            {
+                                newCol = new Collection(name, desc, true);
+                            }
+                            foreach (var s in loadedSongs) newCol.Add(s);
                             CollectionViewModel.AllCollections.Add(newCol);
                             CollectionViewModel.playlists.Add(newCol);
                         }
-
-                        playlistData = readtext.ReadLine();
                     }
+
+                    var resume = Songs.FirstOrDefault(s => s.FileName == playing_filename);
+                    if (resume != null) await LoadAndPlaySong(resume, pos, false);
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to load state: {ex.Message}");
-            } 
+            catch (Exception ex) { Debug.WriteLine($"Load error: {ex.Message}"); }
         }
 
         // triggers fft calculation every tick (30ms)

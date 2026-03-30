@@ -85,6 +85,17 @@ namespace Kith.Sources
             this.editable = editable;
         }
 
+        public Collection(string name, string desc, bool editable)
+        {
+            this.collection_name = name;
+            this.collection_description = desc;
+            this.editable = editable;
+            this.collection_cover = new BitmapImage(new Uri("ms-appx:///Assets/albumplaceholder.png"));
+            this.collection_duration = 0.0;
+            this.collection_size = 0;
+            this.collection_songs = new List<Song>();
+        }
+
         public Collection(string name, BitmapImage cover, string desc, bool editable)
         {
             this.collection_name = name;
