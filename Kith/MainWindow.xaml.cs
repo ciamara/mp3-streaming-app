@@ -1712,13 +1712,16 @@ namespace Kith
                 string dir = Path.Combine(musicPath, "burn");
                 Directory.CreateDirectory(dir);
 
+                uint index = 0;
                 foreach(Song s in ViewModel.CurrentCollectionSongs)
                 {
-                    System.IO.File.Copy(s.FileName, Path.Combine(dir, Path.GetFileName(s.FileName)), true);
+                    string sanitized_name = AudioHelper.Sanitize(s.FileName, index);
+                    System.IO.File.Copy(s.FileName, Path.Combine(dir, sanitized_name), true);
 
+                    index++;
                 }
-                //Burner.BurnCD(dir, CurrentCollection.collection_name);
-                Directory.Delete(dir);
+                Burner.BurnCD(dir, CurrentCollection.collection_name);
+                Directory.Delete(dir, true);
             }
         }
     }
