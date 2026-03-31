@@ -1687,22 +1687,42 @@ namespace Kith
 
         private async void CdBurnButton_Click(object sender, RoutedEventArgs e)
         {
-            if(CurrentCollection.collection_duration < 80)
+            if (CurrentCollection.collection_duration < 80)
             {
                 string musicPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
                 string dir = Path.Combine(musicPath, "burn");
+
+                if (Directory.Exists(dir)) Directory.Delete(dir, true);
                 Directory.CreateDirectory(dir);
 
-                uint index = 0;
-                foreach(Song s in ViewModel.CurrentCollectionSongs)
+                try
                 {
-                    string sanitized_name = AudioHelper.Sanitize(s.FileName, index);
-                    System.IO.File.Copy(s.FileName, Path.Combine(dir, sanitized_name), true);
+                    uint index = 0;
+                    foreach (Song s in ViewModel.CurrentCollectionSongs)
+                    {
+                        string sanitized_name = AudioHelper.Sanitize(s.FileName, index);
+                        System.IO.File.Copy(s.FileName, Path.Combine(dir, sanitized_name), true);
 
-                    index++;
+                        index++;
+                    }
+
+                    Burner.StatusUpdated += (s, msg) => Console.WriteLine($"[BURN STATUS]: {msg}");
+                    Burner.BurnError += (s, ex) => Console.WriteLine($"[BURN ERROR]: {ex.Message}");
+                    Burner.BurnCompleted += (s, args) => Console.WriteLine("[BURN COMPLETED SUCCESS]");
+
+                    await Burner.BurnCD(dir, CurrentCollection.collection_name);
                 }
-                await Burner.BurnCD(dir, CurrentCollection.collection_name);
-                Directory.Delete(dir, true);
+                finally
+                {
+                    if (Directory.Exists(dir))
+                    {
+                        Directory.Delete(dir, true);
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("[BURN ERROR]: Czas trwania kolekcji przekracza 80 minut (limit CD-Audio).");
             }
         }
     }
