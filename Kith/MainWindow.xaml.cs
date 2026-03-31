@@ -38,11 +38,11 @@ namespace Kith
         private object _windowSubclassingReference;
         private List<Song> Songs { get; set; } = new List<Song>();
 
-        private Collection CurrentCollection { get; set; }
+        private Collection CurrentCollection { get; set; } = new();
 
-        private Collection AllSongsCollection { get; set; }
+        private Collection AllSongsCollection { get; set; } = new();
 
-        private Collection LikedSongsCollection { get; set; }
+        private Collection LikedSongsCollection { get; set; } = new();
 
         private Stack<Song> pastSongs { get; set; } = new Stack<Song>();
 
@@ -58,7 +58,7 @@ namespace Kith
 
         private CollectionsView CollectionViewModel { get; set; }
 
-        private Song selectedSongBeforeUpdate;
+        private Song selectedSongBeforeUpdate = new Song();
 
         private TimeSpan lastPlayedPosition;
 
@@ -103,8 +103,10 @@ namespace Kith
             RefreshSongs();
             InitializeCollections();
             ViewModel.SwapCurrentCollectionSelection(Songs);
-            CollectionViewModel.SelectedCollection = CurrentCollection;
-
+            if (CurrentCollection != null)
+            {
+                CollectionViewModel.SelectedCollection = CurrentCollection;
+            }
             LoadState();
 
             //setting min window size
@@ -218,8 +220,12 @@ namespace Kith
             if (ViewModel.PlayingSong == null) return;
 
             lastPlayedPosition = mediaPlayerElement.MediaPlayer.Position;
-            selectedSongBeforeUpdate = ViewModel.SelectedSong;
 
+            if(ViewModel.SelectedSong != null)
+            {
+                selectedSongBeforeUpdate = ViewModel.SelectedSong;
+            }
+         
             string[] arrayArtists = artistsInput.Text.Split(',');
             string[] arrayGenres = genresInput.Text.Split(',');
 
@@ -284,10 +290,10 @@ namespace Kith
                         using (TagLib.File tfile = TagLib.File.Create(song_file))
                         {
                             string currentTitle = tfile.Tag.Title ?? Path.GetFileNameWithoutExtension(song_file);
-                            //string[] currentArtists = tfile.Tag.Artists ?? Array.Empty<string>();
+                            //string[] currentArtists = tfile.Tag.Performers ?? Array.Empty<string>();
 
-                            string[] currentArtists = (tfile.Tag.Artists != null && tfile.Tag.Artists.Length > 0)
-                                    ? tfile.Tag.Artists
+                            string[] currentArtists = (tfile.Tag.Performers != null && tfile.Tag.Performers.Length > 0)
+                                    ? tfile.Tag.Performers
                                     : new string[] { "Unknown Artist" };
 
                             string currentAlbum = tfile.Tag.Album ?? "Unknown Album";
@@ -334,7 +340,7 @@ namespace Kith
             CurrentCollection = AllSongsCollection;
         }
 
-        private async void UpdateFile(Song songToUpdate)
+        private void UpdateFile(Song songToUpdate)
         {
             if (mediaPlayerElement.MediaPlayer.Source != null)
             {
@@ -346,7 +352,7 @@ namespace Kith
             TagLib.File tfile = TagLib.File.Create(songToUpdate.FileName);
 
             tfile.Tag.Title = songToUpdate.Title;
-            tfile.Tag.Artists = songToUpdate.Artists;
+            tfile.Tag.Performers = songToUpdate.Artists;
             tfile.Tag.Album = songToUpdate.Album;
             tfile.Tag.Year = songToUpdate.Year;
             tfile.Tag.Track = songToUpdate.Track;
@@ -359,16 +365,16 @@ namespace Kith
 
             if (selectedSongBeforeUpdate != null)
             {
-                await LoadAndPlaySong(selectedSongBeforeUpdate, lastPlayedPosition);
+                _ = LoadAndPlaySong(selectedSongBeforeUpdate, lastPlayedPosition);
             }
         }
 
-        private async void SongsView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void SongsView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ViewModel.SelectedSong != null && e.AddedItems.Count > 0)
             {
                 lastPlayedPosition = TimeSpan.Zero;
-                await LoadAndPlaySong(ViewModel.SelectedSong, TimeSpan.Zero);
+                _ = LoadAndPlaySong(ViewModel.SelectedSong, TimeSpan.Zero);
             }
         }
 
@@ -510,7 +516,7 @@ namespace Kith
 
             if (isCurrentlyPlaying)
             {
-                await LoadAndPlaySong(song, lastPlayedPosition);
+                _ = LoadAndPlaySong(song, lastPlayedPosition);
             }
 
             ViewModel.SwapCurrentCollectionSelection(CurrentCollection.collection_songs);
@@ -608,7 +614,7 @@ namespace Kith
             }
         }
 
-        private async void FullScreenButton_Click(object sender, RoutedEventArgs e)
+        private void FullScreenButton_Click(object sender, RoutedEventArgs e)
         {
             LayoutRoot.Visibility = Visibility.Collapsed;
             AudioVisualizerMode.Visibility = Visibility.Visible;
@@ -774,20 +780,29 @@ namespace Kith
         private void MediaPlayer_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
         {
             //Console.WriteLine($"media ended: {ViewModel.PlayingSong.Title}");
-            pastSongs.Push(ViewModel.PlayingSong);
-
+            if (ViewModel.PlayingSong != null)
+            {
+                pastSongs.Push(ViewModel.PlayingSong);
+            }
+            
             if (repeatEnabled)
             {
                 DispatcherQueue.TryEnqueue(() =>
                 {
-                    LoadAndPlaySong(ViewModel.PlayingSong, TimeSpan.Zero);
+                    if(ViewModel.PlayingSong != null)
+                    {
+                        _ = LoadAndPlaySong(ViewModel.PlayingSong, TimeSpan.Zero);
+                    } 
                 });
             }
             else if (shuffleEnabled)
             {
                 DispatcherQueue.TryEnqueue(() =>
                 {
-                    LoadAndPlaySong(CurrentCollection.RandomNext(ViewModel.PlayingSong), TimeSpan.Zero);
+                    if (ViewModel.PlayingSong != null)
+                    {
+                        _ = LoadAndPlaySong(CurrentCollection.RandomNext(ViewModel.PlayingSong), TimeSpan.Zero);
+                    }
                 });
             }
             else
@@ -796,14 +811,18 @@ namespace Kith
                 {
                     DispatcherQueue.TryEnqueue(() =>
                     {
-                        LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+                        _ =  LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
                     });
                 }
                 else
                 {
                     DispatcherQueue.TryEnqueue(() =>
                     {
-                        LoadAndPlaySong(CurrentCollection.Next(ViewModel.PlayingSong), TimeSpan.Zero);
+                        var nextSong = CurrentCollection?.Next(ViewModel.PlayingSong!);
+                        if (nextSong != null)
+                        {
+                            _ = LoadAndPlaySong(nextSong, TimeSpan.Zero);
+                        }
                     });
                 }
             }
@@ -962,7 +981,7 @@ namespace Kith
                 {
                     if (pastSongs.Count() != 0)
                     {
-                        LoadAndPlaySong(pastSongs.Pop(), TimeSpan.Zero);
+                        _ = LoadAndPlaySong(pastSongs.Pop(), TimeSpan.Zero);
                     }
                     else
                     {
@@ -978,15 +997,20 @@ namespace Kith
             {
                 if (ViewModel.SongQueue.queue.Count != 0)
                 {
-                    //Console.WriteLine("next from queue");
-                    pastSongs.Push(ViewModel.PlayingSong);
-                    LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+                    if (ViewModel.PlayingSong != null)
+                    {
+                        //Console.WriteLine("next from queue");
+                        pastSongs.Push(ViewModel.PlayingSong);
+                        _ = LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+                    }
                 }
                 else
                 {
-                    mediaPlayerElement.MediaPlayer.Position = ViewModel.PlayingSong.Duration;
+                    if (ViewModel.PlayingSong != null)
+                    {
+                        mediaPlayerElement.MediaPlayer.Position = ViewModel.PlayingSong.Duration;
+                    }    
                 }
-
             }
         }
 
@@ -1137,7 +1161,7 @@ namespace Kith
             catch (Exception ex) { Debug.WriteLine($"Save error: {ex.Message}"); }
         }
 
-        private async void LoadState()
+        private void LoadState()
         {
             try
             {
@@ -1146,7 +1170,7 @@ namespace Kith
 
                 using (StreamReader readtext = new StreamReader(path))
                 {
-                    string playing_filename = readtext.ReadLine();
+                    string? playing_filename = readtext.ReadLine();
                     TimeSpan.TryParse(readtext.ReadLine(), out TimeSpan pos);
                     double.TryParse(readtext.ReadLine(), out double vol);
                     Volume = vol;
@@ -1154,7 +1178,7 @@ namespace Kith
                     volumeSlider.Value = vol * 100;
         
                     // liked songs
-                    string likedData = readtext.ReadLine();
+                    string? likedData = readtext.ReadLine();
                     if (!string.IsNullOrWhiteSpace(likedData))
                     {
                         foreach (string file in likedData.Split(';', StringSplitOptions.RemoveEmptyEntries))
@@ -1165,7 +1189,7 @@ namespace Kith
                     }
 
                     // queue
-                    string queueData = readtext.ReadLine();
+                    string? queueData = readtext.ReadLine();
                     if (!string.IsNullOrWhiteSpace(queueData))
                     {
                         foreach (string file in queueData.Split(';', StringSplitOptions.RemoveEmptyEntries))
@@ -1176,7 +1200,7 @@ namespace Kith
                     }
 
                     // playlists
-                    string playlistLine;
+                    string? playlistLine;
                     while ((playlistLine = readtext.ReadLine()) != null)
                     {
                         if (string.IsNullOrWhiteSpace(playlistLine)) continue;
@@ -1189,7 +1213,7 @@ namespace Kith
                         string desc = parts[2];
                         string cover = parts[3];
 
-                        string fullCoverPath = null;
+                        string? fullCoverPath = null;
                         if (cover != "none" && !string.IsNullOrEmpty(cover))
                         {
                             fullCoverPath = cover.Contains("://") ? cover : "ms-appdata:///local/" + cover;
@@ -1227,14 +1251,14 @@ namespace Kith
                     }
 
                     var resume = Songs.FirstOrDefault(s => s.FileName == playing_filename);
-                    if (resume != null) await LoadAndPlaySong(resume, pos, false);
+                    if (resume != null) _ = LoadAndPlaySong(resume, pos, false);
                 }
             }
             catch (Exception ex) { Debug.WriteLine($"Load error: {ex.Message}"); }
         }
 
         // triggers fft calculation every tick (30ms)
-        private void VisualizerTimer_Tick(object sender, object e)
+        private void VisualizerTimer_Tick(object? sender, object e)
         {
             //Console.WriteLine("timer tick");
 
@@ -1456,7 +1480,7 @@ namespace Kith
         private void groupByAlbumButton_Click(object sender, RoutedEventArgs e)
         {
             Dictionary<string, string> albumMap = new Dictionary<string, string>();
-            String albumSongs;
+            string? albumSongs;
 
             foreach (Song s in Songs)
             {
@@ -1640,7 +1664,7 @@ namespace Kith
                 ViewModel.SongQueue.add(col_songs[rand]);
                 col_songs.RemoveAt(rand);
             }
-            LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+            _ = LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
         }
 
         private void CollectionPlayPauseButton_Click(object sender, RoutedEventArgs e)
@@ -1653,7 +1677,7 @@ namespace Kith
             {
                 ViewModel.SongQueue.add(col_songs[i]);
             }
-            LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+            _ = LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
         }
 
         private void QueueClearButton_Click(object sender, RoutedEventArgs e)
@@ -1661,7 +1685,7 @@ namespace Kith
             ViewModel.SongQueue.Clear();
         }
 
-        private void CdBurnButton_Click(object sender, RoutedEventArgs e)
+        private async void CdBurnButton_Click(object sender, RoutedEventArgs e)
         {
             if(CurrentCollection.collection_duration < 80)
             {
@@ -1677,7 +1701,7 @@ namespace Kith
 
                     index++;
                 }
-                Burner.BurnCD(dir, CurrentCollection.collection_name);
+                await Burner.BurnCD(dir, CurrentCollection.collection_name);
                 Directory.Delete(dir, true);
             }
         }

@@ -10,18 +10,18 @@ namespace Kith.Sources
 {
     public class SongsView : INotifyPropertyChanged
     {
-        private Song _selectedSong;
+        private Song? _selectedSong;
 
         public ObservableCollection<Song> AllSongs { get; set; }
 
-        public ObservableCollection<Song> filtered { get; set; }
+        public ObservableCollection<Song> filtered { get; set; } = new();
 
         public ObservableCollection<Song> CurrentCollectionSongs { get; set; }
 
         public Queue SongQueue { get; set; }
 
-        private Song _playingSong;
-        public Song PlayingSong
+        private Song? _playingSong;
+        public Song? PlayingSong
         {
             get => _playingSong;
             set
@@ -60,7 +60,7 @@ namespace Kith.Sources
             SongQueue = new Queue();
         }
 
-        public Song SelectedSong
+        public Song? SelectedSong
         {
             get { return _selectedSong; }
             set
@@ -106,7 +106,7 @@ namespace Kith.Sources
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

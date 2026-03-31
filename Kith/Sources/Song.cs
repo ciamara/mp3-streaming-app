@@ -7,14 +7,16 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using TagLib;
+using TagLib.Flac;
+using Xamarin.Essentials;
 
 namespace Kith.Sources
 {
     public class Song : INotifyPropertyChanged
     {
-        public string FileName { get; set; }
+        public string FileName { get; set; } = string.Empty;
 
-        private string _title;
+        private string _title = string.Empty;
         public string Title
         {
             get => _title;
@@ -28,7 +30,7 @@ namespace Kith.Sources
             }
         }
 
-        private string[] _artists;
+        private string[] _artists = Array.Empty<string>();
         public string[] Artists
         {
             get => _artists;
@@ -42,7 +44,7 @@ namespace Kith.Sources
             }
         }
 
-        private string _album;
+        private string _album = string.Empty;
         public string Album
         {
             get => _album;
@@ -84,7 +86,7 @@ namespace Kith.Sources
             }
         }
 
-        private string[] _genres;
+        private string[] _genres = Array.Empty<string>();
         public string[] Genres
         {
             get => _genres;
@@ -112,7 +114,7 @@ namespace Kith.Sources
                 }
             }
         }
-        private IPicture[] _pictures;
+        private IPicture[] _pictures = Array.Empty<IPicture>();
 
         public bool _liked { get; set; } = false;
         public bool liked
@@ -126,6 +128,19 @@ namespace Kith.Sources
                     OnPropertyChanged();
                 }
             }
+        }
+
+        public Song()
+        {
+            FileName = "";
+            Title = "";
+            Artists = new string[] {};
+            Album = "";
+            Year = 0000;
+            Track = 0;
+            Genres = new string[] {};
+            Duration = TimeSpan.Zero;
+            Pictures = new IPicture[] {};
         }
 
         public Song(string filename, string title, string[] artists, string album, uint year, uint track, string[] genres, TimeSpan duration, IPicture[] pictures)
@@ -152,8 +167,8 @@ namespace Kith.Sources
             return s_artists[..^2];
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

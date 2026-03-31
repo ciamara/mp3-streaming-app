@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.UI.Xaml.Data;
+using System.IO;
+using Microsoft.UI.Xaml;
 
 using Kith.Converters;
 
@@ -17,11 +20,12 @@ namespace Kith.Sources
             object convertedImage = imageConverter.Convert(
                 value: albumSongs[0].Pictures,
                 targetType: typeof(BitmapImage),
-                parameter: null,
+                parameter: null!,
                 language: string.Empty);
 
             this.collection_name = albumSongs[0].Album;
-            this.collection_cover = convertedImage as BitmapImage;
+            Application.Current.Resources.TryGetValue("AlbumPlaceholder", out object placeholder);
+            this.collection_cover = this.collection_cover = (convertedImage as BitmapImage) ?? (placeholder as BitmapImage)!;
             this.collection_description = albumSongs[0].stringArtists(albumSongs[0].Artists) + " | " + albumSongs[0].Year.ToString();
             this.collection_duration = 0.0;
             this.collection_size = 0;

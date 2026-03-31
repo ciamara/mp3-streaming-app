@@ -10,10 +10,10 @@ namespace Kith.Sources
 {
     public class Collection : INotifyPropertyChanged
     {
-        private BitmapImage _collection_cover;
+        private BitmapImage? _collection_cover;
         public string collection_cover_filename { get; set; } = "";
-        private string _collection_name;
-        private string _collection_description;
+        private string _collection_name = string.Empty;
+        private string _collection_description = string.Empty;
         private double _collection_duration;
         private uint _collection_size;
 
@@ -23,7 +23,7 @@ namespace Kith.Sources
             set { _collection_name = value; OnPropertyChanged(); }
         }
 
-        public BitmapImage collection_cover
+        public BitmapImage? collection_cover
         {
             get => _collection_cover;
             set
@@ -55,7 +55,7 @@ namespace Kith.Sources
         }
 
         public bool editable { get; set; }
-        public List<Song> _collection_songs { get; set; }
+        public List<Song> _collection_songs { get; set; } = new();
 
         public List<Song> collection_songs
         {
@@ -133,7 +133,7 @@ namespace Kith.Sources
             }
         }
 
-        public Song Next(Song song)
+        public Song? Next(Song song)
         {
             if (collection_songs == null || collection_songs.Count == 0)
             {
@@ -208,8 +208,8 @@ namespace Kith.Sources
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

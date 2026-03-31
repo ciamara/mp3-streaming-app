@@ -6,16 +6,16 @@ namespace Kith
 {
     public sealed class CustomMediaTransportControls : MediaTransportControls
     {
-        private AppBarButton previousTrackButton;
-        private AppBarButton nextTrackButton;
+        private AppBarButton? previousTrackButton;
+        private AppBarButton? nextTrackButton;
 
-        private AppBarToggleButton repeatButton;
-        private AppBarToggleButton shuffleButton;
+        private AppBarToggleButton? repeatButton;
+        private AppBarToggleButton? shuffleButton;
 
-        public event EventHandler PreviousTrackClicked;
-        public event EventHandler NextTrackClicked;
-        public event EventHandler RepeatClicked;
-        public event EventHandler ShuffleClicked;
+        public event EventHandler? PreviousTrackClicked;
+        public event EventHandler? NextTrackClicked;
+        public event EventHandler? RepeatClicked;
+        public event EventHandler? ShuffleClicked;
 
         public CustomMediaTransportControls()
         {
@@ -25,7 +25,6 @@ namespace Kith
         protected override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-
             previousTrackButton = GetTemplateChild("PreviousTrackButton") as AppBarButton;
             nextTrackButton = GetTemplateChild("NextTrackButton") as AppBarButton;
 

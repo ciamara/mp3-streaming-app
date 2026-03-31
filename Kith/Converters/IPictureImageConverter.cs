@@ -39,7 +39,7 @@ namespace Kith.Converters
             {
                 return placeholder;
             }
-            return null;
+            return placeholder;
         }
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {

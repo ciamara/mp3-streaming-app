@@ -9,7 +9,7 @@ namespace Kith.Sources
 {
     public class CollectionsView : INotifyPropertyChanged
     {
-        private Collection _selectedCollection;
+        private Collection? _selectedCollection;
         public ObservableCollection<Collection> AllCollections { get; set; }
         public ObservableCollection<Collection> playlists { get; set; }
         public ObservableCollection<Collection> albums { get; set; }
@@ -24,7 +24,7 @@ namespace Kith.Sources
             filtered = new ObservableCollection<Collection>();
         }
 
-        public Collection SelectedCollection
+        public Collection? SelectedCollection
         {
             get => _selectedCollection;
             set
@@ -51,8 +51,8 @@ namespace Kith.Sources
             SelectedCollection = c;
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
