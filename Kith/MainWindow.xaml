@@ -627,6 +627,21 @@
                             <FontIcon x:Name="disc" Glyph="&#xE7C8;" FontSize="20" />
                         </Button>
 
+                        <Button x:Name="folderExportButton"
+                                Margin="0,0,0,0"
+                                Height="30"
+                                Width="30"
+                                HorizontalAlignment="Left"
+                                Click="folderExportButton_Click"
+                                VerticalAlignment="Center"
+                                Padding="0,0,0,0"
+                                VerticalContentAlignment="Center"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                ToolTipService.ToolTip="export to folder">
+                            <FontIcon x:Name="folder" Glyph="&#xED43;" FontSize="20" />
+                        </Button>
+
                     </StackPanel>
                     
 

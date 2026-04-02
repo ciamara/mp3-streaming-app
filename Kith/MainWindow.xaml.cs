@@ -21,6 +21,7 @@ using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI;
+using static System.Windows.Forms.AxHost;
 using Window = Microsoft.UI.Xaml.Window;
 
 
@@ -1689,11 +1690,40 @@ namespace Kith
         {
             if (CurrentCollection.collection_duration < 80)
             {
+                CdBurnButton.IsEnabled = false;
+
                 string musicPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
                 string dir = Path.Combine(musicPath, "burn");
 
                 if (Directory.Exists(dir)) Directory.Delete(dir, true);
                 Directory.CreateDirectory(dir);
+
+                var statusTextBlock = new TextBlock
+                {
+                    Text = "Preparing to burn...",
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+
+                var progressBar = new ProgressBar
+                {
+                    IsIndeterminate = true,
+                    HorizontalAlignment = HorizontalAlignment.Stretch
+                };
+
+                var dialogPanel = new StackPanel();
+                dialogPanel.Children.Add(statusTextBlock);
+                dialogPanel.Children.Add(progressBar);
+
+                ContentDialog burnDialog = new ContentDialog
+                {
+                    Title = "Burning Audio CD",
+                    Content = dialogPanel,
+                    XamlRoot = this.Content.XamlRoot,
+                    Background = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19")),
+                    BorderBrush = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19"))
+                };
+
+                _ = burnDialog.ShowAsync();
 
                 try
                 {
@@ -1702,27 +1732,95 @@ namespace Kith
                     {
                         string sanitized_name = AudioHelper.Sanitize(s.FileName, index);
                         System.IO.File.Copy(s.FileName, Path.Combine(dir, sanitized_name), true);
-
                         index++;
                     }
 
-                    Burner.StatusUpdated += (s, msg) => Console.WriteLine($"[BURN STATUS]: {msg}");
-                    Burner.BurnError += (s, ex) => Console.WriteLine($"[BURN ERROR]: {ex.Message}");
-                    Burner.BurnCompleted += (s, args) => Console.WriteLine("[BURN COMPLETED SUCCESS]");
+                    EventHandler<string> statusHandler = (s, msg) => 
+                    {
+                        DispatcherQueue.TryEnqueue(() => statusTextBlock.Text = msg);
+                    };
 
-                    await Burner.BurnCD(dir, CurrentCollection.collection_name);
+                    EventHandler<Exception> errorHandler = (s, ex) => 
+                    {
+                        DispatcherQueue.TryEnqueue(() => 
+                        {
+                            statusTextBlock.Text = $"error: {ex.Message}";
+                            progressBar.IsIndeterminate = false;
+                        });
+                    };
+
+                    EventHandler burnCompletedHandler = (s, args) => 
+                    {
+                        DispatcherQueue.TryEnqueue(() => 
+                        {
+                            statusTextBlock.Text = "burn completed successfully";
+                            progressBar.IsIndeterminate = false;
+                            progressBar.Value = 100;
+                        });
+                        
+                        Task.Delay(1500).ContinueWith(_ => 
+                        {
+                            DispatcherQueue.TryEnqueue(() => burnDialog.Hide());
+                        });
+                    };
+
+                    Burner.StatusUpdated += statusHandler;
+                    Burner.BurnError += errorHandler;
+                    Burner.BurnCompleted += burnCompletedHandler;
+
+                    try
+                    {
+                        await Task.Run(() => Burner.BurnCD(dir, CurrentCollection.collection_name));
+                    }
+                    finally
+                    {
+                        Burner.StatusUpdated -= statusHandler;
+                        Burner.BurnError -= errorHandler;
+                        Burner.BurnCompleted -= burnCompletedHandler;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        statusTextBlock.Text = $"error: {ex.Message}";
+                        progressBar.IsIndeterminate = false;
+                    });
                 }
                 finally
                 {
                     if (Directory.Exists(dir))
                     {
-                        Directory.Delete(dir, true);
+                        try { Directory.Delete(dir, true); } catch { }
                     }
+
+                    CdBurnButton.IsEnabled = true;
                 }
             }
             else
             {
                 Console.WriteLine("[BURN ERROR]: playlist time longer than 80 minutes.");
+            }
+        }
+
+        private void folderExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            //creating dir with playlist name
+            string musicPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+            string dir = Path.Combine(musicPath, CurrentCollection.collection_name);
+
+            if (CurrentCollection.GetType() == typeof(Album))
+            {
+                dir = Path.Combine(musicPath, CurrentCollection.collection_name + " - " + CurrentCollection.collection_songs[0].Artists[0]);
+            }
+
+            if (Directory.Exists(dir)) Directory.Delete(dir, true);
+            Directory.CreateDirectory(dir);
+
+            //copying songs into new dir
+            foreach (Song s in ViewModel.CurrentCollectionSongs)
+            {
+                System.IO.File.Copy(s.FileName, Path.Combine(dir, Path.GetFileName(s.FileName)), true);
             }
         }
     }
