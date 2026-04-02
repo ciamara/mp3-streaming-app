@@ -50,3 +50,5 @@ Focus mode open 1
 ![Main Window](md_screens/screen6.png)               
 Focus mode open 2                          
 ![Main Window](md_screens/screen8.png)               
+Focus mode open 3          
+![Main Window](md_screens/screen9.png)         
