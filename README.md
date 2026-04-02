@@ -14,7 +14,9 @@
 - Saving application state between sessions
 - Downloading mp3 files from youtube by link
 - Focus mode with dynamic color based on the album cover
-- Quality of life features like search boxes and filters
+- Quality of life features like search boxes and filters              
+- CD burning (playlist/albums)            
+- Exporting playlists/albums into folders         
 
 ## Structure
 - Converters: Custom XAML value converters (DurationConverter, IPictureImageConverter, StringJoinConverter) to handle data formatting.
@@ -29,7 +31,7 @@
 - Platform: Windows 10/11 (Desktop)
 
 ## Roadmap
-- Integrated CD burning function with the ability to directly and quickly burn already made playlists
+- implement CD-text in CD burning (extremely difficult and sketchy, no information online, no libraries)
 
 ## Gallery
 Main window
