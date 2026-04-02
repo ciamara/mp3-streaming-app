@@ -80,6 +80,6 @@
     <AdditionalFiles Include="NativeMethods.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\AudioHelpers\AudioVisualiser\AudioVisualiser\AudioHelpers.csproj" />
+    <ProjectReference Include="..\..\AudioVisualiser\AudioVisualiser\AudioVisualiser\AudioHelpers.csproj" />
   </ItemGroup>
 </Project>

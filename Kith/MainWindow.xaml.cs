@@ -1722,7 +1722,7 @@ namespace Kith
             }
             else
             {
-                Console.WriteLine("[BURN ERROR]: Czas trwania kolekcji przekracza 80 minut (limit CD-Audio).");
+                Console.WriteLine("[BURN ERROR]: playlist time longer than 80 minutes.");
             }
         }
     }
