@@ -25,7 +25,7 @@ namespace Kith.Sources
 
             this.collection_name = albumSongs[0].Album;
             Application.Current.Resources.TryGetValue("AlbumPlaceholder", out object placeholder);
-            this.collection_cover = this.collection_cover = (convertedImage as BitmapImage) ?? (placeholder as BitmapImage)!;
+            this.collection_cover = (convertedImage as BitmapImage) ?? (placeholder as BitmapImage)!;
             this.collection_description = albumSongs[0].stringArtists(albumSongs[0].Artists) + " | " + albumSongs[0].Year.ToString();
             this.collection_duration = 0.0;
             this.collection_size = 0;

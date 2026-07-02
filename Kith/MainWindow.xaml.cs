@@ -1690,7 +1690,72 @@ namespace Kith
         {
             if (CurrentCollection.collection_duration < 80)
             {
+                string driveLetter;
+                try
+                {
+                    driveLetter = GetCdDriveLetter();
+                }
+                catch (Exception ex)
+                {
+                    ContentDialog driveErrorDialog = new ContentDialog
+                    {
+                        Title = "Optical Drive Not Found",
+                        Content = ex.Message,
+                        CloseButtonText = "OK",
+                        XamlRoot = this.Content.XamlRoot,
+                        Background = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19")),
+                        BorderBrush = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19"))
+                    };
+                    _ = driveErrorDialog.ShowAsync();
+                    return;
+                }
+
                 CdBurnButton.IsEnabled = false;
+
+                bool isAlbum = CurrentCollection is Album;
+                string discAuthor = "Various Artists";
+
+                if (isAlbum)
+                {
+                    if (CurrentCollection.collection_songs.Count > 0)
+                    {
+                        discAuthor = CurrentCollection.collection_songs[0].Artists[0];
+                    }
+                }
+                else
+                {
+                    Microsoft.UI.Xaml.Controls.TextBox authorInput = new Microsoft.UI.Xaml.Controls.TextBox
+                    {
+                        Text = Environment.UserName,
+                        SelectionStart = 0,
+                        SelectionLength = Environment.UserName.Length
+                    };
+
+                    ContentDialog authorDialog = new ContentDialog
+                    {
+                        Title = "Playlist Author",
+                        Content = authorInput,
+                        PrimaryButtonText = "Burn CD",
+                        SecondaryButtonText = "Cancel",
+                        DefaultButton = ContentDialogButton.Primary,
+                        XamlRoot = this.Content.XamlRoot,
+                        Background = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19")),
+                        BorderBrush = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19"))
+                    };
+
+                    var authorResult = await authorDialog.ShowAsync();
+
+                    if (authorResult != ContentDialogResult.Primary)
+                    {
+                        CdBurnButton.IsEnabled = true;
+                        return; // cancelled burn
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(authorInput.Text))
+                    {
+                        discAuthor = authorInput.Text.Trim();
+                    }
+                }
 
                 string musicPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
                 string dir = Path.Combine(musicPath, "burn");
@@ -1746,6 +1811,7 @@ namespace Kith
                         {
                             statusTextBlock.Text = $"error: {ex.Message}";
                             progressBar.IsIndeterminate = false;
+                            burnDialog.CloseButtonText = "Close";
                         });
                     };
 
@@ -1764,19 +1830,19 @@ namespace Kith
                         });
                     };
 
-                    Burner.StatusUpdated += statusHandler;
-                    Burner.BurnError += errorHandler;
-                    Burner.BurnCompleted += burnCompletedHandler;
+                    BurnerImgBurn.StatusUpdated += statusHandler;
+                    BurnerImgBurn.BurnError += errorHandler;
+                    BurnerImgBurn.BurnCompleted += burnCompletedHandler;
 
                     try
                     {
-                        await Task.Run(() => Burner.BurnCD(dir, CurrentCollection.collection_name));
+                        await Task.Run(() => BurnerImgBurn.BurnCDWithText(dir, CurrentCollection.collection_name, discAuthor, isAlbum, driveLetter));     
                     }
                     finally
                     {
-                        Burner.StatusUpdated -= statusHandler;
-                        Burner.BurnError -= errorHandler;
-                        Burner.BurnCompleted -= burnCompletedHandler;
+                        BurnerImgBurn.StatusUpdated -= statusHandler;
+                        BurnerImgBurn.BurnError -= errorHandler;
+                        BurnerImgBurn.BurnCompleted -= burnCompletedHandler;
                     }
                 }
                 catch (Exception ex)
@@ -1785,6 +1851,7 @@ namespace Kith
                     {
                         statusTextBlock.Text = $"error: {ex.Message}";
                         progressBar.IsIndeterminate = false;
+                        burnDialog.CloseButtonText = "Close";
                     });
                 }
                 finally
@@ -1801,6 +1868,21 @@ namespace Kith
             {
                 Console.WriteLine("[BURN ERROR]: playlist time longer than 80 minutes.");
             }
+        }
+
+        /// <summary>
+        /// Retrieves the first available CD-ROM drive letter on the system.
+        /// </summary>
+        private string GetCdDriveLetter()
+        {
+            var cdDrive = DriveInfo.GetDrives().FirstOrDefault(d => d.DriveType == DriveType.CDRom);
+
+            if (cdDrive != null)
+            {
+                return cdDrive.Name.TrimEnd('\\');
+            }
+
+            throw new Exception("No optical drive detected on this system.");
         }
 
         private void folderExportButton_Click(object sender, RoutedEventArgs e)
