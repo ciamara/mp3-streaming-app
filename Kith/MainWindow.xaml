@@ -370,6 +370,38 @@
                             </AppBarButton.Icon>
                         </AppBarButton>
                     </StackPanel>-->
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Top"
+                            Spacing="10"
+                            Margin="10,5,0,0">
+                    <Image Width="30" Height="30">
+                        <Image.Source>
+                            <SvgImageSource UriSource="ms-appx:///Assets/kith_logo_cut_white.svg"
+                                RasterizePixelWidth="80" 
+                                RasterizePixelHeight="80"/>
+                        </Image.Source>
+                    </Image>
+                    <Button x:Name="colorMode"
+                            Grid.Column="0"
+                            Click="colorModeButton_Click" 
+                            ClickMode="Release"
+                            Margin="0,0,0,0"
+                            ToolTipService.ToolTip="change color mode"
+                            Height="40"
+                            Width="40"
+                            Padding="0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Foreground="{StaticResource BrokenWhite}"
+                            BorderBrush="Transparent"
+                            Background="Transparent">
+                        <FontIcon x:Name="ColorModeIcon" 
+                                  Glyph="&#xE790;" 
+                                  FontSize="17" 
+                                  VerticalAlignment="Center"/>
+                    </Button>
+                </StackPanel>
 
                 <AutoSuggestBox x:Name="downloader"
                                 QuerySubmitted="MainSearch_QuerySubmitted"
@@ -513,6 +545,24 @@
                     <ColumnDefinition Width="1*" />
                 </Grid.ColumnDefinitions>
 
+                <Grid Grid.Column="0"
+                      Grid.Row="0"
+                      Margin="25,0,0,0"
+                      Background="Transparent">
+                    
+                    <Rectangle x:Name="coverBackground"
+                               MaxHeight="724"
+                               MaxWidth="768.8"
+                               Margin="0,0,0,0"
+                               Stroke="Transparent"
+                               Grid.Column="1"
+                               Grid.Row="1"
+                               RadiusX="5"
+                               RadiusY="5"
+                               Opacity="0.17"
+                               Fill="{StaticResource FoxyDark}"/>
+                </Grid>
+                
                 <Grid Grid.Column="0"
                       Grid.Row="0"
                       Margin="25,0,0,0"

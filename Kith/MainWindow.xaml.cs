@@ -1,5 +1,6 @@
 ﻿using AudioHelpers;
 using Kith.Sources;
+using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,15 +14,20 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using TagLib;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
+using Windows.Media.Devices;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI;
+using static System.Net.Mime.MediaTypeNames;
 using static System.Windows.Forms.AxHost;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Window = Microsoft.UI.Xaml.Window;
 
 
@@ -52,6 +58,8 @@ namespace Kith
         private bool Muted { get; set; }
 
         private bool repeatEnabled { get; set; }
+
+        private bool dynamicColorMode { get; set; }
 
         private bool shuffleEnabled { get; set; }
 
@@ -793,6 +801,10 @@ namespace Kith
                     if(ViewModel.PlayingSong != null)
                     {
                         _ = LoadAndPlaySong(ViewModel.PlayingSong, TimeSpan.Zero);
+                        if (dynamicColorMode)
+                        {
+                            UpdateAppTheme(ViewModel.PlayingSong);
+                        }
                     } 
                 });
             }
@@ -802,7 +814,12 @@ namespace Kith
                 {
                     if (ViewModel.PlayingSong != null)
                     {
-                        _ = LoadAndPlaySong(CurrentCollection.RandomNext(ViewModel.PlayingSong), TimeSpan.Zero);
+                        var rand = CurrentCollection.RandomNext(ViewModel.PlayingSong);
+                        _ = LoadAndPlaySong(rand, TimeSpan.Zero);
+                        if (dynamicColorMode)
+                        {
+                            UpdateAppTheme(rand);
+                        }
                     }
                 });
             }
@@ -812,7 +829,12 @@ namespace Kith
                 {
                     DispatcherQueue.TryEnqueue(() =>
                     {
-                        _ =  LoadAndPlaySong(ViewModel.SongQueue.pop(), TimeSpan.Zero);
+                        var popped = ViewModel.SongQueue.pop();
+                        _ =  LoadAndPlaySong(popped, TimeSpan.Zero);
+                        if (dynamicColorMode)
+                        {
+                            UpdateAppTheme(popped);
+                        }
                     });
                 }
                 else
@@ -823,6 +845,10 @@ namespace Kith
                         if (nextSong != null)
                         {
                             _ = LoadAndPlaySong(nextSong, TimeSpan.Zero);
+                            if (dynamicColorMode)
+                            {
+                                UpdateAppTheme(nextSong);
+                            }
                         }
                     });
                 }
@@ -861,7 +887,7 @@ namespace Kith
         private void ListLikeButton_Click(object sender, RoutedEventArgs e)
         {
 
-            if (sender is Button clickedButton)
+            if (sender is Microsoft.UI.Xaml.Controls.Button clickedButton)
             {
                 if (clickedButton.DataContext is Song clickedSong)
                 {
@@ -947,7 +973,7 @@ namespace Kith
         {
             if (e.AddedItems.Count > 0 && e.AddedItems[0] is Collection targetCollection)
             {
-                if (sender is ListView listView && listView.DataContext is Song targetSong)
+                if (sender is Microsoft.UI.Xaml.Controls.ListView listView && listView.DataContext is Song targetSong)
                 {
                     if (!targetCollection.collection_songs.Contains(targetSong))
                     {
@@ -1098,7 +1124,7 @@ namespace Kith
 
         private void ListFlyoutCollectionsList_Loaded(object sender, RoutedEventArgs e)
         {
-            if (sender is ListView listView)
+            if (sender is Microsoft.UI.Xaml.Controls.ListView listView)
             {
                 listView.ItemsSource = CollectionViewModel.AllCollections;
             }
@@ -1442,6 +1468,298 @@ namespace Kith
             }
         }
 
+        private async Task UpdateAppTheme(Song song)
+        {
+            if (song?.Pictures == null || song.Pictures.Length == 0) return;
+
+            try
+            {
+                using (SoftwareBitmap bitmap = await VisualHelper.GetBitmapFromIPicture(song.Pictures[0]))
+                {
+                    if (bitmap == null) return;
+
+                    string hexColor = await VisualHelper.ExtractFeatureColor(bitmap);
+                    var rawColor = VisualHelper.GetColorFromHex(hexColor);
+                    bool isLight = VisualHelper.IsColorLight(rawColor);
+                    SolidColorBrush baseBrush;
+                    SolidColorBrush hoverBrush;
+                    SolidColorBrush focusBrush;
+                    SolidColorBrush lightTextBrush;
+                    SolidColorBrush darkTextBrush;
+                    SolidColorBrush textBrush;
+
+                    lightTextBrush = new SolidColorBrush(VisualHelper.GetColorFromHex("#D7CFCD"));
+                    darkTextBrush = new SolidColorBrush(VisualHelper.GetColorFromHex("#251914"));
+
+                    if (isLight)
+                    {
+                        rawColor = VisualHelper.DarkenColor(rawColor, 0.3);
+                        baseBrush = new SolidColorBrush(rawColor);
+
+                        var lighterColor = VisualHelper.LightenColor(rawColor, 0.15);
+                        hoverBrush = new SolidColorBrush(lighterColor);
+
+                        var lightestColor = VisualHelper.LightenColor(lighterColor, 0.15);
+                        focusBrush = new SolidColorBrush(lightestColor);
+
+                        textBrush = darkTextBrush;
+                    }
+                    else
+                    {
+                        baseBrush = new SolidColorBrush(rawColor);
+
+                        var lighterColor = VisualHelper.LightenColor(rawColor, 0.1);
+                        hoverBrush = new SolidColorBrush(lighterColor);
+
+                        var lightestColor = VisualHelper.LightenColor(lighterColor, 0.1);
+                        focusBrush = new SolidColorBrush(lightestColor);
+
+                        textBrush = lightTextBrush;
+                    }
+
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        // downloader -------------------------------------------------------
+
+                        var dwnl = downloader.Resources;
+
+                        downloader.Background = baseBrush;
+                        downloader.BorderBrush = baseBrush;
+                        downloader.Foreground = textBrush;
+
+                        dwnl["TextControlForeground"] = textBrush;
+                        dwnl["TextControlForegroundPointerOver"] = textBrush;
+                        dwnl["TextControlForegroundFocused"] = textBrush;
+
+                        dwnl["TextControlButtonForeground"] = textBrush;
+                        dwnl["TextControlButtonForegroundPointerOver"] = textBrush;
+                        dwnl["TextControlButtonForegroundPressed"] = textBrush;
+
+                        dwnl["TextControlBackgroundPointerOver"] = hoverBrush;
+                        dwnl["TextControlBorderBrushPointerOver"] = hoverBrush;
+
+                        dwnl["TextControlBackgroundFocused"] = focusBrush;
+                        dwnl["TextControlBorderBrushFocused"] = focusBrush;
+
+                        // gradients ----------------------------------------------------
+
+                        LinearGradientBrush sideGradient = new LinearGradientBrush();
+                        sideGradient.StartPoint = new Windows.Foundation.Point(0, 0);
+                        sideGradient.EndPoint = new Windows.Foundation.Point(0, 1);
+
+                        sideGradient.GradientStops.Add(new GradientStop
+                        {
+                            Color = VisualHelper.GetColorFromHex("#111111"),
+                            Offset = 0.1
+                        });
+
+                        sideGradient.GradientStops.Add(new GradientStop
+                        {
+                            Color = Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.25), (byte)(rawColor.G * 0.25), (byte)(rawColor.B * 0.25)),
+                            Offset = 0.40
+                        });
+
+                        sideGradient.GradientStops.Add(new GradientStop
+                        {
+                            Color = Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.42), (byte)(rawColor.G * 0.42), (byte)(rawColor.B * 0.42)),
+                            Offset = 0.60
+                        });
+
+                        sideGradient.GradientStops.Add(new GradientStop
+                        {
+                            Color = rawColor,
+                            Offset = 1.0
+                        });
+
+                        LinearGradientBrush bottomGradient = new LinearGradientBrush();
+                        bottomGradient.StartPoint = new Windows.Foundation.Point(0, 0);
+                        bottomGradient.EndPoint = new Windows.Foundation.Point(0, 1);
+
+                        bottomGradient.GradientStops.Add(new GradientStop
+                        {
+                            Color = rawColor,
+                            Offset = 0.1
+                        });
+
+                        bottomGradient.GradientStops.Add(new GradientStop
+                        {
+                            Color = Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.42), (byte)(rawColor.G * 0.42), (byte)(rawColor.B * 0.42)),
+                            Offset = 0.50
+                        });
+
+                        bottomGradient.GradientStops.Add(new GradientStop
+                        {
+                            Color = Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.25), (byte)(rawColor.G * 0.25), (byte)(rawColor.B * 0.25)),
+                            Offset = 0.70
+                        });
+
+                        bottomGradient.GradientStops.Add(new GradientStop
+                        {
+                            Color = VisualHelper.GetColorFromHex("#111111"),
+                            Offset = 1.0
+                        });
+
+                        LeftSection.Fill = sideGradient;
+                        RightSection.Fill = sideGradient;
+                        MiddleSection.Fill = sideGradient;
+                        BottomSection.Fill = bottomGradient;
+
+                        // collection filter ----------------------------------------------------------
+
+                        var fil = CollectionFilter.Resources;
+
+                        CollectionFilter.Background = baseBrush;
+                        CollectionFilter.BorderBrush = baseBrush;
+                        CollectionFilter.Foreground = textBrush;
+
+                        fil["TextControlForeground"] = textBrush;
+                        fil["TextControlForegroundPointerOver"] = textBrush;
+                        fil["TextControlForegroundFocused"] = textBrush;
+
+                        fil["TextControlButtonForeground"] = textBrush;
+                        fil["TextControlButtonForegroundPointerOver"] = textBrush;
+                        fil["TextControlButtonForegroundPressed"] = textBrush;
+
+                        fil["TextControlBackgroundPointerOver"] = hoverBrush;
+                        fil["TextControlBorderBrushPointerOver"] = hoverBrush;
+
+                        fil["TextControlBackgroundFocused"] = focusBrush;
+                        fil["TextControlBorderBrushFocused"] = focusBrush;
+
+                        // filter buttons ---------------------------------------------------------
+
+                        var pfil = playlistFilterButton.Resources;
+                        var afil = albumFilterButton.Resources;
+
+                        playlistFilterButton.Foreground = lightTextBrush;
+                        albumFilterButton.Foreground = lightTextBrush;
+
+                        pfil["ToggleButtonBackgroundChecked"] = baseBrush;
+                        afil["ToggleButtonBackgroundChecked"] = baseBrush;
+
+                        pfil["ToggleButtonBackgroundCheckedPointerOver"] = baseBrush;
+                        afil["ToggleButtonBackgroundCheckedPointerOver"] = baseBrush;
+
+                        pfil["ToggleButtonBackgroundCheckedPressed"] = baseBrush;
+                        afil["ToggleButtonBackgroundCheckedPressed"] = baseBrush;
+
+                        pfil["ToggleButtonBorderBrushChecked"] = baseBrush;
+                        afil["ToggleButtonBorderBrushChecked"] = baseBrush;
+
+                        pfil["ToggleButtonForegroundChecked"] = textBrush;
+                        afil["ToggleButtonForegroundChecked"] = textBrush;
+
+                        pfil["ToggleButtonForegroundUnchecked"] = lightTextBrush;
+                        afil["ToggleButtonForegroundUnchecked"] = lightTextBrush;
+
+                        pfil["ToggleButtonBackgroundPointerOver"] = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.25), (byte)(rawColor.G * 0.25), (byte)(rawColor.B * 0.25)));
+                        afil["ToggleButtonBackgroundPointerOver"] = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.25), (byte)(rawColor.G * 0.25), (byte)(rawColor.B * 0.25)));
+
+                        pfil["ToggleButtonBorderBrushPointerOver"] = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.25), (byte)(rawColor.G * 0.25), (byte)(rawColor.B * 0.25)));
+                        afil["ToggleButtonBorderBrushPointerOver"] = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.25), (byte)(rawColor.G * 0.25), (byte)(rawColor.B * 0.25)));
+
+                        if (isLight)
+                        {
+                            pfil["ToggleButtonForegroundCheckedPointerOver"] = VisualHelper.GetColorFromHex("#111111");
+                            afil["ToggleButtonForegroundCheckedPointerOver"] = VisualHelper.GetColorFromHex("#111111");
+                            pfil["ToggleButtonForegroundCheckedPressed"] = VisualHelper.GetColorFromHex("#111111");
+                            afil["ToggleButtonForegroundCheckedPressed"] = VisualHelper.GetColorFromHex("#111111");
+                        }
+                        else
+                        {
+                            pfil["ToggleButtonForegroundCheckedPointerOver"] = VisualHelper.GetColorFromHex("#FFFFFF");
+                            afil["ToggleButtonForegroundCheckedPointerOver"] = VisualHelper.GetColorFromHex("#FFFFFF");
+                            pfil["ToggleButtonForegroundCheckedPressed"] = VisualHelper.GetColorFromHex("#FFFFFF");
+                            afil["ToggleButtonForegroundCheckedPressed"] = VisualHelper.GetColorFromHex("#FFFFFF");
+                        }
+
+                        // collections view -------------------------------------------------------------------------------
+                        var cv = CollectionsView.Resources;
+
+                        cv["ListViewItemSelectionIndicatorBrush"] = rawColor;
+                        cv["ListViewItemSelectionIndicatorPointerOverBrush"] = rawColor;
+                        cv["ListViewItemSelectionIndicatorPressedBrush"] = rawColor;
+
+                        // collection view
+
+                        coverBackground.Fill = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.6), (byte)(rawColor.G * 0.6), (byte)(rawColor.B * 0.6)));
+
+                        // song filter
+
+                        var sfil = SongFilter.Resources;
+
+                        SongFilter.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.6), (byte)(rawColor.G * 0.6), (byte)(rawColor.B * 0.6)));
+                        SongFilter.Foreground = textBrush;
+                        SongFilter.BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.6), (byte)(rawColor.G * 0.6), (byte)(rawColor.B * 0.6)));
+
+                        sfil["TextControlBackgroundPointerOver"] = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.7), (byte)(rawColor.G * 0.7), (byte)(rawColor.B * 0.7)));
+                        sfil["TextControlBorderBrushPointerOver"] = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.7), (byte)(rawColor.G * 0.7), (byte)(rawColor.B * 0.7)));
+
+                        sfil["TextControlBackgroundGotFocus"] = new SolidColorBrush(rawColor);
+
+                        sfil["TextControlBackgroundFocused"] = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.8), (byte)(rawColor.G * 0.8), (byte)(rawColor.B * 0.8)));
+                        sfil["TextControlBorderBrushFocused"] = new SolidColorBrush(Windows.UI.Color.FromArgb(255, (byte)(rawColor.R * 0.8), (byte)(rawColor.G * 0.8), (byte)(rawColor.B * 0.8)));
+
+                        sfil["TextControlForegroundPointerOver"] = textBrush;
+                        sfil["TextControlForegroundFocused"] = textBrush;
+
+                        sfil["TextControlButtonForeground"] = textBrush;
+                        sfil["TextControlButtonForegroundPointerOver"] = textBrush;
+                        sfil["TextControlButtonForegroundPressed"] = textBrush;
+
+                        // media transport controls
+
+                        //< SolidColorBrush x: Key = "SystemControlForegroundBaseHighBrush" Color = "White" />
+                        //< SolidColorBrush x: Key = "SystemControlForegroundBaseMediumBrush" Color = "#D7CFCD" />
+
+                        //< !--Transport Control Buttons(Play, Pause, Next, Prev) States-- >
+                        //< SolidColorBrush x: Key = "AppBarButtonForegroundPointerOver" Color = "White" />
+                        //< SolidColorBrush x: Key = "AppBarButtonForegroundPressed" Color = "Gray" />
+                        //< SolidColorBrush x: Key = "AppBarButtonBackgroundPointerOver" Color = "#40251b" />
+                        //< SolidColorBrush x: Key = "AppBarButtonBackgroundPressed" Color = "#4d2a1d" />
+
+                        //< !--Seek Bar(Slider) Empty Track Colors-- >
+                        //< SolidColorBrush x: Key = "SliderTrackFill" Color = "#341e16" />
+                        //< SolidColorBrush x: Key = "SliderTrackFillPointerOver" Color = "#40251b" />
+                        //< SolidColorBrush x: Key = "SliderTrackFillPressed" Color = "#4d2a1d" />
+
+
+                        //< !--Seek Bar(Slider) Played Value Colors-- >
+                        //< SolidColorBrush x: Key = "SliderTrackValueFill" Color = "#D7CFCD" />
+                        //< SolidColorBrush x: Key = "SliderTrackValueFillPointerOver" Color = "White" />
+                        //< SolidColorBrush x: Key = "SliderTrackValueFillPressed" Color = "White" />
+
+                        //< !--Seek Bar(Slider) Thumb(The Dragger) Colors-- >
+                        //< SolidColorBrush x: Key = "SliderThumbBackground" Color = "#D7CFCD" />
+                        //< SolidColorBrush x: Key = "SliderThumbBackgroundPointerOver" Color = "White" />
+                        //< SolidColorBrush x: Key = "SliderThumbBackgroundPressed" Color = "Gray" />
+
+                        //var mtc = mediaPlayerElement.TransportControls.Resources;
+
+                        //mtc[""]
+
+
+                        // refresh
+                        RefreshElementTheme(downloader);
+                        RefreshElementTheme(LeftSection);
+                        RefreshElementTheme(RightSection);
+                        RefreshElementTheme(MiddleSection);
+                        RefreshElementTheme(BottomSection);
+                        RefreshElementTheme(CollectionFilter);
+                        RefreshElementTheme(playlistFilterButton);
+                        RefreshElementTheme(albumFilterButton);
+                        RefreshElementTheme(CollectionsView);
+                        RefreshElementTheme(coverBackground);
+                        RefreshElementTheme(SongFilter);
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Theme Update Error: {ex.Message}");
+            }
+        }
+
         private void RefreshElementTheme(FrameworkElement element)
         {
             var current = element.RequestedTheme;
@@ -1690,6 +2008,22 @@ namespace Kith
         {
             if (CurrentCollection.collection_duration < 80)
             {
+                string imgBurnPath = AudioHelpers.BurnerImgBurn.GetImgBurnPath();
+                if (string.IsNullOrEmpty(imgBurnPath))
+                {
+                    ContentDialog imgBurnErrorDialog = new ContentDialog
+                    {
+                        Title = "ImgBurn Not Found",
+                        Content = "ImgBurn is required to burn CDs but was not found on your system. Please install ImgBurn and try again.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.Content.XamlRoot,
+                        Background = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19")),
+                        BorderBrush = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19"))
+                    };
+                    _ = imgBurnErrorDialog.ShowAsync();
+                    return;
+                }
+
                 string driveLetter;
                 try
                 {
@@ -1769,10 +2103,10 @@ namespace Kith
                     Margin = new Thickness(0, 0, 0, 10)
                 };
 
-                var progressBar = new ProgressBar
+                var progressBar = new Microsoft.UI.Xaml.Controls.ProgressBar
                 {
                     IsIndeterminate = true,
-                    HorizontalAlignment = HorizontalAlignment.Stretch
+                    HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Stretch
                 };
 
                 var dialogPanel = new StackPanel();
@@ -1836,7 +2170,7 @@ namespace Kith
 
                     try
                     {
-                        await Task.Run(() => BurnerImgBurn.BurnCDWithText(dir, CurrentCollection.collection_name, discAuthor, isAlbum, driveLetter));     
+                        await Task.Run(() => AudioHelpers.BurnerImgBurn.BurnCDWithText(dir, CurrentCollection.collection_name, discAuthor, isAlbum, driveLetter, imgBurnPath));
                     }
                     finally
                     {
@@ -1866,6 +2200,17 @@ namespace Kith
             }
             else
             {
+                ContentDialog durationErrorDialog = new ContentDialog
+                {
+                    Title = "Playlist Too Long",
+                    Content = "The selected playlist exceeds the 80-minute limit for a standard Audio CD. Please remove some tracks and try again.",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.Content.XamlRoot,
+                    Background = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19")),
+                    BorderBrush = new SolidColorBrush(VisualHelper.GetColorFromHex("#6c2d19"))
+                };
+
+                _ = durationErrorDialog.ShowAsync();
                 Console.WriteLine("[BURN ERROR]: playlist time longer than 80 minutes.");
             }
         }
@@ -1904,6 +2249,13 @@ namespace Kith
             {
                 System.IO.File.Copy(s.FileName, Path.Combine(dir, Path.GetFileName(s.FileName)), true);
             }
+        }
+
+        private void colorModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            dynamicColorMode = !dynamicColorMode;
+
+            UpdateAppTheme(ViewModel.PlayingSong);
         }
     }
 }
